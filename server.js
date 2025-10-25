@@ -7,6 +7,28 @@ const fs = require('fs');
 const cors = require('cors');
 require('dotenv').config();
 
+// --- NEW: GLOBAL ERROR HANDLERS ---
+// This catches unexpected errors (e.g., undefined variable)
+process.on('uncaughtException', (err) => {
+    console.error('!!! UNCAUGHT EXCEPTION !!!');
+    console.error('An unexpected error occurred. The app is shutting down.');
+    console.error(err.stack || err);
+    // It's not safe to continue, so shut down.
+    // A process manager (like pm2) should restart it.
+    process.exit(1); 
+});
+
+// This catches errors from Promises (async/await) that don't have a .catch()
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('!!! UNHANDLED PROMISE REJECTION !!!');
+    console.error('At:', promise);
+    console.error('Reason:', reason.stack || reason);
+    // It's not safe to continue, so shut down.
+    process.exit(1);
+});
+// --- END NEW: GLOBAL ERROR HANDLERS ---
+
+
 const app = express();
 const port = process.env.PORT || 3000;
 
@@ -52,7 +74,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 
-// ## 3. HELPER FUNCTION: GEOLOCATION ##
+// ## 3. HELPER FUNCTION: GEOLocation ##
 function calculateDistance(lat1, lon1, lat2, lon2) {
     const R = 6371e3; // Earth's radius in meters
     const φ1 = lat1 * Math.PI / 180;
@@ -230,7 +252,7 @@ app.post('/attendance', upload.fields([{ name: 'photo1', maxCount: 1 }, { name: 
     const cleanupFiles = () => {
         try {
             if (photo1 && fs.existsSync(photo1.path)) fs.unlinkSync(photo1.path);
-            if (photo2 && fs.existsSync(photo.path)) fs.unlinkSync(photo2.path);
+            if (photo2 && fs.existsSync(photo2.path)) fs.unlinkSync(photo2.path);
         } catch (err) {
             console.error("Error cleaning up files:", err);
         }
@@ -433,7 +455,7 @@ app.get('/attendance/:teacher_id', async (req, res) => {
         res.status(200).json(recordsWithPhotoUrl);
         
     } catch (error) {
-        console.error('Error fetching attendance:', error);
+        console.error('Error fetching teacher attendance report:', error);
         res.status(500).json({ error: 'An internal server error occurred.' });
     }
 });
@@ -508,3 +530,4 @@ const startServer = async () => {
 
 // Start the server
 startServer();
+
