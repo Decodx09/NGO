@@ -230,7 +230,7 @@ app.post('/attendance', upload.fields([{ name: 'photo1', maxCount: 1 }, { name: 
     const cleanupFiles = () => {
         try {
             if (photo1 && fs.existsSync(photo1.path)) fs.unlinkSync(photo1.path);
-            if (photo2 && fs.existsSync(photo2.path)) fs.unlinkSync(photo2.path);
+            if (photo2 && fs.existsSync(photo.path)) fs.unlinkSync(photo2.path);
         } catch (err) {
             console.error("Error cleaning up files:", err);
         }
@@ -467,7 +467,44 @@ app.get('/dashboard/stats', async (req, res) => {
 
 
 // ## 5. START SERVER ##
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
-});
 
+// --- New function to check database connection ---
+const checkDatabaseConnection = async () => {
+    console.log('Checking database connection...');
+    try {
+        // Get a connection from the pool and run a simple query
+        const [rows] = await dbPool.query('SELECT 1 + 1 AS solution');
+        console.log(`Database connection successful! Test query result: 2`);
+        return true;
+    } catch (error) {
+        console.error('!!! FAILED TO CONNECT TO DATABASE !!!');
+        console.error('Error:', error.message);
+        if (error.code === 'ECONNREFUSED') {
+            console.error(`Hint: Is the database server running on "${process.env.DB_HOST}"?`);
+        }
+        if (error.code === 'ER_ACCESS_DENIED_ERROR') {
+            console.error(`Hint: Check your .env file for correct DB_USER ("${process.env.DB_USER}") and DB_PASSWORD.`);
+        }
+        if (error.code === 'ER_BAD_DB_ERROR') {
+            console.error(`Hint: Does the database "${process.env.DB_NAME}" exist?`);
+        }
+        return false;
+    }
+};
+
+// --- Modified server start logic ---
+const startServer = async () => {
+    const isDbConnected = await checkDatabaseConnection();
+    
+    if (isDbConnected) {
+        app.listen(port, () => {
+            console.log(`Server is running on http://localhost:${port}`);
+        });
+    } else {
+        console.error('Server is not starting due to database connection failure.');
+        process.exit(1); // Exit the process with an error code
+    }
+};
+
+// Start the server
+startServer();
