@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Attendance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { 
+            border-bottom: 2px solid #4f46e5; 
+            color: #4f46e5;
+            font-weight: 600;
+        }
+        .tab { border-bottom: 2px solid transparent; }
+        .page { display: none; animation: fadeIn 0.5s; }
+        .page-active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .screen { display: none; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Screen 1: Initial Login / Role Selection -->
+    <div id="login-screen" class="screen min-h-screen flex items-center justify-center">
+        <div class="w-full max-w-md text-center p-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Attendance System</h1>
+            <p class="text-gray-500 mb-10">Please select your role to continue</p>
+            
+            <div id="role-selection" class="space-y-4">
+                <button id="show-admin-login-btn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">Admin Login</button>
+                <button id="show-teacher-login-btn" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">Teacher Login</button>
+            </div>
+
+            <form id="admin-login-form" class="hidden text-left">
+                <h2 class="text-2xl font-semibold mb-6 text-center">Admin Login</h2>
+                <div class="mb-4">
+                    <label for="admin-username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                    <input type="text" id="admin-username" name="username" class="w-full px-3 py-2 border border-gray-300 rounded-md" required value="admin">
+                </div>
+                <div class="mb-6">
+                    <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="admin-password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md" required value="password123">
+                </div>
+                <div class="space-y-3">
+                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">Login</button>
+                    <button type="button" class="back-to-roles-btn w-full bg-gray-200 text-gray-800 py-2 rounded-lg font-medium hover:bg-gray-300 transition">Back</button>
+                </div>
+            </form>
+
+            <form id="teacher-login-form" class="hidden text-left">
+                <h2 class="text-2xl font-semibold mb-6 text-center">Teacher Login</h2>
+                <div class="mb-4">
+                    <label for="employee-code-login" class="block text-sm font-medium text-gray-700 mb-1">Employee Code</label>
+                    <input type="text" id="employee-code-login" name="employee_code" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="mb-6">
+                    <label for="teacher-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="teacher-password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                </div>
+                <div class="space-y-3">
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">Login & Proceed</button>
+                    <button type="button" class="back-to-roles-btn w-full bg-gray-200 text-gray-800 py-2 rounded-lg font-medium hover:bg-gray-300 transition">Back</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Screen 2: Admin Dashboard -->
+    <div id="admin-screen" class="screen container mx-auto p-4 md:p-8">
+        <header class="mb-8 flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Teacher Attendance</h1>
+                <p class="text-gray-500 mt-1">Admin Dashboard</p>
+            </div>
+            <button id="admin-logout-btn" class="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition">Logout</button>
+        </header>
+        <nav class="mb-8 border-b border-gray-200">
+            <ul class="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500">
+                <li class="mr-2"><a href="#" id="tab-dashboard" class="inline-block p-4 tab tab-active">Dashboard</a></li>
+                <li class="mr-2"><a href="#" id="tab-teachers" class="inline-block p-4 tab">Teachers</a></li>
+                <li class="mr-2"><a href="#" id="tab-reports" class="inline-block p-4 tab">Reports</a></li>
+            </ul>
+        </nav>
+        <main>
+            <section id="page-dashboard" class="page page-active">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="dashboard-stats"></div>
+            </section>
+            <section id="page-teachers" class="page">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold">Teacher Roster</h2>
+                    <button id="add-teacher-btn" class="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">Add Teacher</button>
+                </div>
+                <div id="teachers-list" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"></div>
+                <div id="attendance-details-section" class="mt-8 hidden">
+                    <h3 class="text-xl font-semibold mb-4">Attendance History for <span id="attendance-teacher-name"></span></h3>
+                    <div id="attendance-list" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"></div>
+                </div>
+            </section>
+            <section id="page-reports" class="page">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4">Present Today</h2>
+                        <div id="present-list" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"></div>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-semibold mb-4">Absent Today</h2>
+                        <div id="absent-list" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"></div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Screen 3: Teacher Attendance Marking -->
+    <div id="teacher-screen" class="screen min-h-screen flex flex-col p-4">
+        <div class="w-full max-w-xl mx-auto">
+             <header class="w-full py-4 flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-900">Mark Live Attendance</h1>
+                <div class="flex items-center gap-4">
+                    <span id="teacher-greeting" class="text-gray-700 font-medium"></span>
+                    <button id="teacher-logout-btn" class="text-sm bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition">Logout</button>
+                </div>
+            </header>
+            <main class="bg-white p-8 rounded-lg shadow-sm border border-gray-200">
+                <form id="attendance-form">
+                    <div class="mb-6">
+                        <label for="photo1" class="block text-sm font-medium text-gray-700 mb-1">Live Photograph 1</label>
+                        <input type="file" id="photo1" name="photo1" accept="image/*" capture="environment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" required>
+                        <img id="photo-preview-1" src="" alt="Photo 1 Preview" class="mt-4 rounded-lg hidden w-full"/>
+                    </div>
+                    <div class="mb-6">
+                        <label for="photo2" class="block text-sm font-medium text-gray-700 mb-1">Live Photograph 2</label>
+                        <input type="file" id="photo2" name="photo2" accept="image/*" capture="environment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" required>
+                        <img id="photo-preview-2" src="" alt="Photo 2 Preview" class="mt-4 rounded-lg hidden w-full"/>
+                    </div>
+                    <div class="text-center">
+                        <button type="submit" id="submit-attendance-btn" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400">Mark My Attendance</button>
+                        <p id="location-status" class="text-sm text-gray-500 mt-4">Getting your location...</p>
+                    </div>
+                </form>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal for Adding/Editing Teacher -->
+    <div id="teacher-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-10">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+            <h2 id="teacher-modal-title" class="text-2xl font-semibold mb-6">Add New Teacher</h2>
+            <form id="add-teacher-form">
+                <div class="mb-4"><label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label><input type="text" id="name" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md" required></div>
+                <div class="mb-4"><label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label><input type="email" id="email" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-md" required></div>
+                <div class="mb-4"><label for="employee_code" class="block text-sm font-medium text-gray-700 mb-1">Employee Code</label><input type="text" id="employee_code" name="employee_code" class="w-full px-3 py-2 border border-gray-300 rounded-md" required></div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="mb-4">
+                        <label for="latitude" class="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                        <input type="number" step="any" id="latitude" name="latitude" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                    </div>
+                    <div class="mb-4">
+                        <label for="longitude" class="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                        <input type="number" step="any" id="longitude" name="longitude" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
+                    </div>
+                </div>
+
+                <div class="mb-6"><label for="teacher-add-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label><input type="password" id="teacher-add-password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md" required><p class="text-xs text-gray-500 mt-1">Required for new teachers.</p></div>
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="cancel-teacher-btn" class="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+                    <button type="submit" id="save-teacher-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700">Save Teacher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal for Deletion Confirmation -->
+    <div id="confirm-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-20">
+        <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-sm text-center">
+            <h2 class="text-xl font-bold mb-4">Are you sure?</h2>
+            <p id="confirm-message" class="text-gray-600 mb-6"></p>
+            <div class="flex justify-center gap-4">
+                <button id="cancel-delete-btn" class="px-6 py-2 bg-gray-200 rounded-md hover:bg-gray-300">Cancel</button>
+                <button id="confirm-delete-btn" class="px-6 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300 z-30">
+        <p id="toast-message"></p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_BASE_URL = 'http://localhost:3000';
+
+            // --- Element Selectors ---
+            const loginScreen = document.getElementById('login-screen');
+            const adminScreen = document.getElementById('admin-screen');
+            const teacherScreen = document.getElementById('teacher-screen');
+            
+            const roleSelection = document.getElementById('role-selection');
+            const showAdminLoginBtn = document.getElementById('show-admin-login-btn');
+            const showTeacherLoginBtn = document.getElementById('show-teacher-login-btn');
+            
+            const adminLoginForm = document.getElementById('admin-login-form');
+            const teacherLoginForm = document.getElementById('teacher-login-form');
+            const backToRolesBtns = document.querySelectorAll('.back-to-roles-btn');
+            
+            const tabs = document.querySelectorAll('.tab');
+            const pages = document.querySelectorAll('.page');
+            
+            const dashboardStatsEl = document.getElementById('dashboard-stats');
+            const teachersListEl = document.getElementById('teachers-list');
+            const presentListEl = document.getElementById('present-list');
+            const absentListEl = document.getElementById('absent-list');
+            
+            const addTeacherBtn = document.getElementById('add-teacher-btn');
+            const adminLogoutBtn = document.getElementById('admin-logout-btn');
+            const teacherLogoutBtn = document.getElementById('teacher-logout-btn');
+            
+            const teacherGreeting = document.getElementById('teacher-greeting');
+            const attendanceForm = document.getElementById('attendance-form');
+            const photoInput1 = document.getElementById('photo1');
+            const photoPreview1 = document.getElementById('photo-preview-1');
+            const photoInput2 = document.getElementById('photo2');
+            const photoPreview2 = document.getElementById('photo-preview-2');
+            const locationStatusEl = document.getElementById('location-status');
+            const submitAttendanceBtn = document.getElementById('submit-attendance-btn');
+            
+            const teacherModal = document.getElementById('teacher-modal');
+            const teacherModalTitle = document.getElementById('teacher-modal-title');
+            const saveTeacherBtn = document.getElementById('save-teacher-btn');
+            const cancelTeacherBtn = document.getElementById('cancel-teacher-btn');
+            const addTeacherForm = document.getElementById('add-teacher-form');
+            const passwordFieldContainer = document.getElementById('teacher-add-password').parentElement;
+
+            const confirmModal = document.getElementById('confirm-modal');
+            const confirmMessage = document.getElementById('confirm-message');
+            const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+            const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+            
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+
+            // --- State Management ---
+            let userLocation = null;
+            let teacherIdToDelete = null;
+            let editModeTeacherId = null;
+
+            // --- UI & Helper Functions ---
+            const showScreen = (screen) => {
+                document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
+                const displayStyle = (screen === adminScreen) ? 'block' : 'flex';
+                screen.style.display = displayStyle;
+            };
+
+            const showToast = (message, isError = false) => {
+                toastMessage.textContent = message;
+                toast.classList.toggle('bg-red-600', isError);
+                toast.classList.toggle('bg-gray-800', !isError);
+                toast.classList.remove('opacity-0', 'translate-y-10');
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-10');
+                }, 3000);
+            };
+
+            const switchTab = (tabId) => {
+                tabs.forEach(tab => {
+                    const pageId = tab.id.replace('tab-', 'page-');
+                    const page = document.getElementById(pageId);
+                    if (tab.id === tabId) {
+                        tab.classList.add('tab-active');
+                        page.classList.add('page-active');
+                    } else {
+                        tab.classList.remove('tab-active');
+                        page.classList.remove('page-active');
+                    }
+                });
+            };
+
+            const showConfirmModal = (teacherId, teacherName) => {
+                teacherIdToDelete = teacherId;
+                confirmMessage.textContent = `Do you really want to delete ${teacherName}? This will also remove all their attendance records.`;
+                confirmModal.classList.remove('hidden');
+            };
+
+            const hideConfirmModal = () => {
+                teacherIdToDelete = null;
+                confirmModal.classList.add('hidden');
+            };
+
+            const startLocationCapture = () => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            userLocation = {
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                            };
+                            locationStatusEl.textContent = 'Location captured successfully.';
+                            locationStatusEl.classList.replace('text-gray-500', 'text-green-600');
+                        },
+                        (error) => {
+                            userLocation = null;
+                            locationStatusEl.textContent = 'Error: Please enable location services.';
+                            locationStatusEl.classList.replace('text-gray-500', 'text-red-600');
+                            showToast('Please enable location services to mark attendance.', true);
+                        }
+                    );
+                } else {
+                    locationStatusEl.textContent = 'Geolocation is not supported by this browser.';
+                    locationStatusEl.classList.replace('text-gray-500', 'text-red-600');
+                }
+            };
+            
+            const resetTeacherModal = () => {
+                editModeTeacherId = null;
+                teacherModalTitle.textContent = 'Add New Teacher';
+                saveTeacherBtn.textContent = 'Save Teacher';
+                addTeacherForm.reset();
+                passwordFieldContainer.classList.remove('hidden');
+                addTeacherForm.elements.password.required = true;
+            };
+
+            // --- API Fetch Functions ---
+            const fetchDashboardStats = async () => {
+                dashboardStatsEl.innerHTML = '<p class="text-center col-span-3">Loading stats...</p>';
+                try {
+                    const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
+                    const data = await response.json();
+                    if (!response.ok) throw new Error(data.error || 'Failed to fetch stats');
+                    dashboardStatsEl.innerHTML = `
+                        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500">Total Teachers</h3><p class="text-3xl font-semibold mt-1">${data.total_teachers}</p></div>
+                        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-green-600">Present Today</h3><p class="text-3xl font-semibold mt-1">${data.present_today}</p></div>
+                        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-red-600">Absent Today</h3><p class="text-3xl font-semibold mt-1">${data.absent_today}</p></div>`;
+                } catch (error) {
+                    dashboardStatsEl.innerHTML = `<p class="text-red-500 col-span-3">${error.message}</p>`;
+                }
+            };
+
+            const fetchTeachersForAdmin = async () => {
+                teachersListEl.innerHTML = `<div class="p-6 text-center text-gray-500">Loading teachers...</div>`;
+                try {
+                    const response = await fetch(`${API_BASE_URL}/teachers`);
+                    const teachers = await response.json();
+                    if (!response.ok) throw new Error(teachers.error || 'Failed to fetch teachers');
+                    
+                    if (teachers.length === 0) {
+                        teachersListEl.innerHTML = `<div class="p-6 text-center text-gray-500">No teachers found. Add one to get started.</div>`;
+                        return;
+                    }
+
+                    teachersListEl.innerHTML = `
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Name</th>
+                                    <th scope="col" class="px-6 py-3">Email</th>
+                                    <th scope="col" class="px-6 py-3">Employee Code</th>
+                                    <th scope="col" class="px-6 py-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${teachers.map(t => `
+                                    <tr class="bg-white border-b hover:bg-gray-50">
+                                        <td class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${t.name}</td>
+                                        <td class="px-6 py-4">${t.email}</td>
+                                        <td class="px-6 py-4">${t.employee_code}</td>
+                                        <td class="px-6 py-4 text-right space-x-4">
+                                            <button data-id="${t.id}" data-name="${t.name}" class="view-attendance-btn font-medium text-green-600 hover:underline">View Attendance</button>
+                                            <button 
+                                                data-id="${t.id}" 
+                                                data-name="${t.name}" 
+                                                data-email="${t.email}" 
+                                                data-code="${t.employee_code}" 
+                                                data-latitude="${t.latitude || ''}" 
+                                                data-longitude="${t.longitude || ''}" 
+                                                class="edit-btn font-medium text-indigo-600 hover:underline">Edit</button>
+                                            <button data-teacher-id="${t.id}" data-teacher-name="${t.name}" class="delete-btn font-medium text-red-600 hover:underline">Delete</button>
+                                        </td>
+                                    </tr>`).join('')}
+                            </tbody>
+                        </table>`;
+                } catch (error) {
+                    teachersListEl.innerHTML = `<div class="p-6 text-red-500">${error.message}</div>`;
+                }
+            };
+
+            const fetchTodaysAttendance = async () => {
+                presentListEl.innerHTML = `<div class="p-6 text-center text-gray-500">Loading report...</div>`;
+                try {
+                    const response = await fetch(`${API_BASE_URL}/attendance/today`);
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Failed to fetch data');
+                    if (result.data.length === 0) {
+                        presentListEl.innerHTML = `<div class="p-6 text-center text-gray-500">No attendance marked today.</div>`;
+                        return;
+                    }
+                    presentListEl.innerHTML = result.data.map(r => `<div class="flex items-center justify-between p-4 border-b last:border-b-0"><div><p class="font-semibold text-gray-900">${r.teacher_name}</p><p class="text-xs text-gray-500">Marked at: ${new Date(r.attendance_time).toLocaleTimeString()}</p></div><div class="flex gap-2"><a href="${API_BASE_URL}${r.photo_url}" target="_blank" class="text-sm text-indigo-600 hover:underline">Photo 1</a> <a href="${API_BASE_URL}${r.photo_url2}" target="_blank" class="text-sm text-indigo-600 hover:underline">Photo 2</a></div></div>`).join('');
+                } catch (error) {
+                    presentListEl.innerHTML = `<div class="p-6 text-red-500">${error.message}</div>`;
+                }
+            };
+
+            const fetchAbsentTeachers = async () => {
+                absentListEl.innerHTML = `<div class="p-6 text-center text-gray-500">Loading report...</div>`;
+                try {
+                    const response = await fetch(`${API_BASE_URL}/attendance/absent`);
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Failed to fetch data');
+                    if (result.data.length === 0) {
+                        absentListEl.innerHTML = `<div class="p-6 text-center text-gray-500">All teachers are present.</div>`;
+                        return;
+                    }
+                    absentListEl.innerHTML = result.data.map(t => `<div class="p-4 border-b last:border-b-0"><p class="font-semibold text-gray-900">${t.name}</p><p class="text-xs text-gray-500">${t.email}</p></div>`).join('');
+                } catch (error) {
+                    absentListEl.innerHTML = `<div class="p-6 text-red-500">${error.message}</div>`;
+                }
+            };
+
+            const deleteTeacher = async (teacherId) => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/teachers/${teacherId}`, { method: 'DELETE' });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Failed to delete teacher');
+                    showToast('Teacher deleted successfully!');
+                    hideConfirmModal();
+                    initializeAdminDashboard();
+                } catch (error) {
+                    showToast(error.message, true);
+                    hideConfirmModal();
+                }
+            };
+
+            const fetchAndDisplayTeacherAttendance = async (teacherId, teacherName) => {
+                const attendanceDetailsSection = document.getElementById('attendance-details-section');
+                const attendanceListEl = document.getElementById('attendance-list');
+                const attendanceTeacherNameEl = document.getElementById('attendance-teacher-name');
+
+                attendanceListEl.innerHTML = `<div class="p-6 text-center text-gray-500">Loading attendance...</div>`;
+                attendanceTeacherNameEl.textContent = teacherName;
+                attendanceDetailsSection.classList.remove('hidden');
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/attendance/report/teacher/${teacherId}?startDate=2000-01-01&endDate=2100-01-01`); // Wide range
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                         throw new Error(result.error || 'Failed to fetch attendance');
+                    }
+                    
+                    if (result.data.length === 0) {
+                        attendanceListEl.innerHTML = `<div class="p-6 text-center text-gray-500">No attendance records found for this teacher.</div>`;
+                        return;
+                    }
+
+                    attendanceListEl.innerHTML = `
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Date & Time</th><th scope="col" class="px-6 py-3">Location (Lat, Long)</th></tr></thead>
+                            <tbody>
+                                ${result.data.map(a => `<tr class="bg-white border-b hover:bg-gray-50"><td class="px-6 py-4">${new Date(a.attendance_time).toLocaleString()}</td><td class="px-6 py-4">${a.latitude}, ${a.longitude}</td></tr>`).join('')}
+                            </tbody>
+                        </table>`;
+                } catch (error) {
+                    attendanceListEl.innerHTML = `<div class="p-6 text-red-500">${error.message}</div>`;
+                }
+            };
+
+            // --- Event Listeners Setup ---
+            showAdminLoginBtn.addEventListener('click', () => {
+                roleSelection.classList.add('hidden');
+                adminLoginForm.classList.remove('hidden');
+            });
+            
+            showTeacherLoginBtn.addEventListener('click', () => {
+                roleSelection.classList.add('hidden');
+                teacherLoginForm.classList.remove('hidden');
+            });
+
+            backToRolesBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    adminLoginForm.classList.add('hidden');
+                    teacherLoginForm.classList.add('hidden');
+                    roleSelection.classList.remove('hidden');
+                });
+            });
+
+            adminLoginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(adminLoginForm);
+                const data = Object.fromEntries(formData.entries());
+                try {
+                    const response = await fetch(`${API_BASE_URL}/login/admin`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Login failed');
+                    sessionStorage.setItem('isAdminLoggedIn', 'true');
+                    showScreen(adminScreen);
+                    initializeAdminDashboard();
+                } catch (error) {
+                    showToast(error.message, true);
+                }
+            });
+
+            teacherLoginForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(teacherLoginForm);
+                const data = Object.fromEntries(formData.entries());
+                try {
+                    const response = await fetch(`${API_BASE_URL}/login/teacher`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Login failed');
+                    sessionStorage.setItem('loggedInTeacher', JSON.stringify(result.teacher));
+                    setupAuthenticatedTeacherView(result.teacher);
+                } catch (error) {
+                    showToast(error.message, true);
+                }
+            });
+
+            adminLogoutBtn.addEventListener('click', () => {
+                sessionStorage.removeItem('isAdminLoggedIn');
+                showScreen(loginScreen);
+                adminLoginForm.reset();
+                teacherLoginForm.reset();
+                adminLoginForm.classList.add('hidden');
+                teacherLoginForm.classList.add('hidden');
+                roleSelection.classList.remove('hidden');
+            });
+
+            teacherLogoutBtn.addEventListener('click', () => {
+                sessionStorage.removeItem('loggedInTeacher');
+                attendanceForm.reset();
+                photoPreview1.classList.add('hidden');
+                photoPreview2.classList.add('hidden');
+                showScreen(loginScreen);
+                adminLoginForm.reset();
+                teacherLoginForm.reset();
+                adminLoginForm.classList.add('hidden');
+                teacherLoginForm.classList.add('hidden');
+                roleSelection.classList.remove('hidden');
+            });
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    switchTab(tab.id);
+                });
+            });
+
+            addTeacherBtn.addEventListener('click', () => {
+                resetTeacherModal();
+                teacherModal.classList.remove('hidden');
+            });
+
+            cancelTeacherBtn.addEventListener('click', () => {
+                teacherModal.classList.add('hidden');
+                resetTeacherModal();
+            });
+
+            teachersListEl.addEventListener('click', (e) => {
+                const target = e.target;
+                if (target.classList.contains('delete-btn')) {
+                    showConfirmModal(target.dataset.teacherId, target.dataset.teacherName);
+                } else if (target.classList.contains('edit-btn')) {
+                    editModeTeacherId = target.dataset.id;
+                    addTeacherForm.elements.name.value = target.dataset.name;
+                    addTeacherForm.elements.email.value = target.dataset.email;
+                    addTeacherForm.elements.employee_code.value = target.dataset.code;
+                    addTeacherForm.elements.latitude.value = target.dataset.latitude;
+                    addTeacherForm.elements.longitude.value = target.dataset.longitude;
+                    teacherModalTitle.textContent = 'Edit Teacher Details';
+                    saveTeacherBtn.textContent = 'Save Changes';
+                    passwordFieldContainer.classList.add('hidden'); 
+                    addTeacherForm.elements.password.required = false;
+                    teacherModal.classList.remove('hidden');
+                } else if (target.classList.contains('view-attendance-btn')) {
+                    const teacherId = target.dataset.id;
+                    const teacherName = target.closest('tr').querySelector('td').textContent;
+                    fetchAndDisplayTeacherAttendance(teacherId, teacherName);
+                }
+            });
+
+            cancelDeleteBtn.addEventListener('click', hideConfirmModal);
+            confirmDeleteBtn.addEventListener('click', () => {
+                if (teacherIdToDelete) {
+                    deleteTeacher(teacherIdToDelete);
+                }
+            });
+
+            addTeacherForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(addTeacherForm);
+                const data = Object.fromEntries(formData.entries());
+                
+                const isEditMode = !!editModeTeacherId;
+                if (isEditMode && !data.password) {
+                    delete data.password;
+                }
+
+                const url = isEditMode ? `${API_BASE_URL}/teachers/${editModeTeacherId}` : `${API_BASE_URL}/teachers`;
+                const method = isEditMode ? 'PUT' : 'POST';
+
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                    });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Failed to save teacher');
+                    
+                    showToast(`Teacher ${isEditMode ? 'updated' : 'added'} successfully!`);
+                    teacherModal.classList.add('hidden');
+                    resetTeacherModal();
+                    fetchTeachersForAdmin();
+                } catch (error) {
+                    showToast(error.message, true);
+                }
+            });
+
+            attendanceForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const loggedInTeacher = JSON.parse(sessionStorage.getItem('loggedInTeacher'));
+                if (!loggedInTeacher) {
+                    showToast('Authentication error. Please log in again.', true); return;
+                }
+                if (!userLocation) {
+                    showToast('Location not available. Please enable location services.', true); return;
+                }
+                const formData = new FormData(attendanceForm);
+                formData.append('latitude', userLocation.latitude);
+                formData.append('longitude', userLocation.longitude);
+                formData.append('teacher_id', loggedInTeacher.id);
+                
+                submitAttendanceBtn.disabled = true;
+                submitAttendanceBtn.textContent = 'Submitting...';
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/attendance`, { method: 'POST', body: formData });
+                    const result = await response.json();
+                    if (!response.ok) throw new Error(result.error || 'Failed to mark attendance');
+                    
+                    showToast('Attendance marked successfully!');
+                    attendanceForm.reset();
+                    photoPreview1.classList.add('hidden');
+                    photoPreview2.classList.add('hidden');
+                } catch (error) {
+                    showToast(error.message, true);
+                } finally {
+                    submitAttendanceBtn.disabled = false;
+                    submitAttendanceBtn.textContent = 'Mark My Attendance';
+                }
+            });
+
+            const setupPhotoPreview = (inputEl, previewEl) => {
+                inputEl.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                            previewEl.src = event.target.result;
+                            previewEl.classList.remove('hidden');
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            };
+
+            setupPhotoPreview(photoInput1, photoPreview1);
+            setupPhotoPreview(photoInput2, photoPreview2);
+            
+            // --- App Initialization ---
+            const initializeAdminDashboard = () => {
+                fetchDashboardStats();
+                fetchTeachersForAdmin();
+                fetchTodaysAttendance();
+                fetchAbsentTeachers();
+            };
+
+            const setupAuthenticatedTeacherView = (teacher) => {
+                teacherGreeting.textContent = `Welcome, ${teacher.name}`;
+                showScreen(teacherScreen);
+                startLocationCapture();
+            };
+
+            const main = () => {
+                const isAdmin = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+                const loggedInTeacherData = sessionStorage.getItem('loggedInTeacher');
+
+                if (isAdmin) {
+                    showScreen(adminScreen);
+                    initializeAdminDashboard();
+                } else if (loggedInTeacherData) {
+                    setupAuthenticatedTeacherView(JSON.parse(loggedInTeacherData));
+                } else {
+                    showScreen(loginScreen);
+                }
+            };
+
+            main();
+        });
+    </script>
+</body>
+</html>
