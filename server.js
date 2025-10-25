@@ -70,9 +70,8 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 // ## 4. API ROUTES ##
 
-// --- Health Check Route ---
 app.get('/', (req, res) => {
-    res.status(200).json({ message: 'Teacher Attendance API is running!', timestamp: new Date().toISOString() });
+    res.sendFile(path.join(__dirname, 'frontend.html'));
 });
 
 // --- LOGIN ROUTES ---
