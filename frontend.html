@@ -214,13 +214,9 @@
             <form id="add-teacher-form">
                 <div class="mb-4"><label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label><input type="text" id="name" name="name" class="w-full px-3 py-2 border border-gray-300 rounded-md" required></div>
                 <div class="mb-4"><label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label><input type="email" id="email" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-md" required></div>
-                <div class="mb-4"><label for="employee_code" class="block text-sm font-medium text-gray-700 mb-1">Employee Code</label><input type="text" id="employee_code" name="employee_code" class="w-full px-3 py-2 border border-gray-300 rounded-md" required></div>
+                <div class="mb-4"><label for="employee_code" class="block text-sm font-medium text-gray-700 mb-1">Employee Code</label><input type="text" id="employee_code" name="employee_code" class_models="w-full px-3 py-2 border border-gray-300 rounded-md" required></div>
                 
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="mb-4">
-                        <label for="latitude" class="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
-                        <input type="number" step="any" id="latitude" name="latitude" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
-                    </div>
                     <div class="mb-4">
                         <label for="longitude" class="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
                         <input type="number" step="any" id="longitude" name="longitude" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
@@ -545,7 +541,7 @@
                                 <p class="text-xs text-green-600">In: ${new Date(r.check_in_time).toLocaleTimeString()}</p>
                                 ${r.check_out_time ? `<p class="text-xs text-red-600">Out: ${new Date(r.check_out_time).toLocaleTimeString()}</p>` : '<p class="text-xs text-gray-500">Out: Not marked</p>'}
                             </div>
-                            <div class_models="flex flex-col text-right gap-1">
+                            <div class="flex flex-col text-right gap-1">
                                 <div class="flex gap-2 justify-end">
                                     <span class="text-xs text-gray-500">In:</span>
                                     <a href="${API_BASE_URL}${r.check_in_photo_url1}" target="_blank" class="text-sm text-indigo-600 hover:underline">Photo 1</a> 
@@ -576,7 +572,7 @@
                     }
                     absentListEl.innerHTML = result.data.map(t => `<div class="p-4 border-b last:border-b-0"><p class="font-semibold text-gray-900">${t.name}</p><p class="text-xs text-gray-500">${t.email}</p></div>`).join('');
                 } catch (error) {
-                    absentListEl.innerHTML = `<div class="p-6 text-red-500">${error.message}</div>`;
+                    absentListEl.innerHTML = `<div class"p-6 text-red-500">${error.message}</div>`;
                 }
             };
 
@@ -673,33 +669,50 @@
             const updateTeacherUI = (status) => {
                 teacherLoading.classList.add('hidden');
 
-                if (status.action === 'checkin') {
+                if (status.status === 'not_checked_in' || status.action === 'checkin') { // MODIFIED: Handle 'status' property from server
                     teacherPageTitle.textContent = 'Mark Check-In';
                     teacherStatusMessage.classList.add('hidden');
                     attendanceForm.classList.remove('hidden');
                     submitAttendanceBtn.textContent = 'Submit Check-In';
                     submitAttendanceBtn.classList.replace('bg-blue-600', 'bg-green-600');
                     submitAttendanceBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
-                } else if (status.action === 'checkout') {
+                } else if (status.action === 'checkout' || status.status === 'checked_in') { // MODIFIED: Handle new 'checked_in' status
                     teacherPageTitle.textContent = 'Mark Check-Out';
                     teacherStatusMessage.classList.remove('hidden');
                     attendanceForm.classList.remove('hidden');
                     
                     teacherStatusHeading.textContent = 'You are checked in!';
                     teacherStatusHeading.classList.remove('text-red-500');
-                    teacherStatusDetails.textContent = `Checked in at: ${new Date(status.session.check_in_time).toLocaleTimeString()}`;
+                    
+                    // MODIFIED: Check for check_in_time in both possible locations
+                    const checkInTime = status.session ? status.session.check_in_time : status.check_in_time;
+                    teacherStatusDetails.textContent = `Checked in at: ${new Date(checkInTime).toLocaleTimeString()}`;
                     
                     submitAttendanceBtn.textContent = 'Submit Check-Out';
                     submitAttendanceBtn.classList.replace('bg-green-600', 'bg-blue-600');
                     submitAttendanceBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
-                } else if (status.action === 'complete') {
+                } else if (status.action === 'complete' || status.status === 'complete') { // MODIFIED: Proactively handle new 'complete' status
                     teacherPageTitle.textContent = 'Attendance Complete';
                     attendanceForm.classList.add('hidden');
                     teacherStatusMessage.classList.remove('hidden');
                     
                     teacherStatusHeading.textContent = 'Session Complete!';
                     teacherStatusHeading.classList.remove('text-red-500');
-                    teacherStatusDetails.textContent = `You checked out at: ${new Date(status.session.check_out_time).toLocaleTimeString()}`;
+                    
+                    // MODIFIED: Check for check_out_time in both possible locations
+                    const checkOutTime = status.session ? status.session.check_out_time : status.check_out_time;
+                    teacherStatusDetails.textContent = `You checked out at: ${new Date(checkOutTime).toLocaleTimeString()}`;
+                } else {
+                    // --- NEW: Handle unknown states ---
+                    console.error("Unknown attendance status received:", status);
+                    teacherPageTitle.textContent = 'Live Attendance';
+                    attendanceForm.classList.add('hidden');
+                    teacherStatusMessage.classList.remove('hidden');
+                    
+                    teacherStatusHeading.textContent = 'Unable to load status';
+                    teacherStatusHeading.classList.add('text-red-500');
+                    teacherStatusDetails.textContent = 'Could not determine your attendance status. Please try logging out and back in. If the problem persists, contact an admin.';
+                    // --- End of new code ---
                 }
             };
 
@@ -1004,4 +1017,6 @@
     </script>
 </body>
 </html>
+
+
 
