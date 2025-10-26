@@ -175,14 +175,26 @@
     <div id="teacher-screen" class="screen min-h-screen flex flex-col p-4">
         <div class="w-full max-w-xl mx-auto">
              <header class="w-full py-4 flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                <h1 class="text-2xl font-bold text-gray-900">Mark Live Attendance</h1>
+                <!-- MODIFIED: More generic title -->
+                <h1 id="teacher-view-title" class="text-2xl font-bold text-gray-900">Live Attendance</h1>
                 <div class="flex items-center gap-4">
                     <span id="teacher-greeting" class="text-gray-700 font-medium text-center"></span>
                     <button id="teacher-logout-btn" class="text-sm bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition">Logout</button>
                 </div>
             </header>
             <main class="bg-white p-6 sm:p-8 rounded-lg shadow-sm border border-gray-200">
-                <form id="attendance-form">
+                <!-- NEW: Status message area -->
+                <div id="attendance-status-message" class="hidden mb-6 p-4 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                    <p id="status-message-text" class="text-sm font-medium text-center"></p>
+                </div>
+                
+                <!-- NEW: Loading message -->
+                <div id="attendance-loading" class="text-center py-8">
+                    <p class="text-gray-500">Loading attendance status...</p>
+                </div>
+
+                <!-- MODIFIED: Form is hidden by default -->
+                <form id="attendance-form" class="hidden">
                     <div class="mb-6">
                         <label for="photo1" class="block text-sm font-medium text-gray-700 mb-1">Live Photograph 1</label>
                         <input type="file" id="photo1" name="photo1" accept="image/*" capture="environment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" required>
@@ -210,6 +222,7 @@
                 <div class="mb-4"><label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label><input type="email" id="email" name="email" class="w-full px-3 py-2 border border-gray-300 rounded-md" required></div>
                 <div class="mb-4"><label for="employee_code" class="block text-sm font-medium text-gray-700 mb-1">Employee Code</label><input type="text" id="employee_code" name="employee_code" class="w-full px-3 py-2 border border-gray-300 rounded-md" required></div>
                 
+                <!-- FIXED: Added missing Latitude field and fixed grid -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="mb-4">
                         <label for="latitude" class="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
@@ -245,11 +258,12 @@
         <p id="toast-message"></p>
     </div>
 
+    <!-- FIXED: Replaced entire script with the correct version -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // const API_BASE_URL = 'http://100.28.90.244:3000';
-            const API_BASE_URL = 'https://jnanaeducation.com';
-            // const API_BASE_URL = 'http://localhost:3000';
+            // const API_BASE_URL = 'https://jnanaeducation.com';
+            const API_BASE_URL = 'http://localhost:3000';
 
             // --- Element Selectors ---
             const loginScreen = document.getElementById('login-screen');
@@ -300,10 +314,22 @@
             const toast = document.getElementById('toast');
             const toastMessage = document.getElementById('toast-message');
 
+            const attendanceDetailsSection = document.getElementById('attendance-details-section');
+            const attendanceListEl = document.getElementById('attendance-list');
+            const attendanceTeacherNameEl = document.getElementById('attendance-teacher-name');
+            const attendanceFormContainer = document.getElementById('attendance-form');
+            const attendanceLoading = document.getElementById('attendance-loading');
+            const attendanceStatusMessage = document.getElementById('attendance-status-message');
+            const statusMessageText = document.getElementById('status-message-text');
+            const teacherViewTitle = document.getElementById('teacher-view-title');
+
             // --- State Management ---
             let userLocation = null;
             let teacherIdToDelete = null;
             let editModeTeacherId = null;
+            // NEW: State for check-in/out
+            let currentAttendanceAction = 'check_in'; 
+            let loggedInTeacherId = null;
 
             // --- UI & Helper Functions ---
             const showScreen = (screen) => {
@@ -348,6 +374,9 @@
             };
 
             const startLocationCapture = () => {
+                locationStatusEl.textContent = 'Getting your location...';
+                locationStatusEl.classList.replace('text-green-600', 'text-gray-500');
+                locationStatusEl.classList.replace('text-red-600', 'text-gray-500');
                 if (navigator.geolocation) {
                     navigator.geolocation.getCurrentPosition(
                         (position) => {
@@ -456,7 +485,27 @@
                         presentListEl.innerHTML = `<div class="p-6 text-center text-gray-500">No attendance marked today.</div>`;
                         return;
                     }
-                    presentListEl.innerHTML = result.data.map(r => `<div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b last:border-b-0 gap-2"><div><p class="font-semibold text-gray-900">${r.teacher_name}</p><p class="text-xs text-gray-500">Marked at: ${new Date(r.attendance_time).toLocaleTimeString()}</p></div><div class="flex gap-2"><a href="${API_BASE_URL}${r.photo_url}" target="_blank" class="text-sm text-indigo-600 hover:underline">Photo 1</a> <a href="${API_BASE_URL}${r.photo_url2}" target="_blank" class="text-sm text-indigo-600 hover:underline">Photo 2</a></div></div>`).join('');
+                    // MODIFIED: Show check-in and check-out times
+                    presentListEl.innerHTML = result.data.map(r => {
+                        const checkInTime = new Date(r.check_in_time).toLocaleTimeString();
+                        const checkOutTime = r.check_out_time ? new Date(r.check_out_time).toLocaleTimeString() : 'N/A';
+                        const status = r.check_out_time ? 'Checked-Out' : 'Checked-In';
+                        
+                        return `
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b last:border-b-0 gap-2">
+                            <div>
+                                <p class="font-semibold text-gray-900">${r.teacher_name}</p>
+                                <p class="text-xs text-gray-500">In: ${checkInTime} | Out: ${checkOutTime}</p>
+                                <p class="text-xs font-medium ${r.check_out_time ? 'text-green-600' : 'text-blue-600'}">${status}</p>
+                            </div>
+                            <div class="flex gap-2 text-sm">
+                                <a href="${API_BASE_URL}${r.check_in_photo_url1}" target="_blank" class="text-indigo-600 hover:underline">In-Photo1</a>
+                                <a href="${API_BASE_URL}${r.check_in_photo_url2}" target="_blank" class="text-indigo-600 hover:underline">In-Photo2</a>
+                                ${r.check_out_photo_url1 ? `<a href="${API_BASE_URL}${r.check_out_photo_url1}" target="_blank" class="text-indigo-600 hover:underline">Out-Photo1</a>` : ''}
+                                ${r.check_out_photo_url2 ? `<a href="${API_BASE_URL}${r.check_out_photo_url2}" target="_blank" class="text-indigo-600 hover:underline">Out-Photo2</a>` : ''}
+                            </div>
+                        </div>`;
+                    }).join('');
                 } catch (error) {
                     presentListEl.innerHTML = `<div class="p-6 text-red-500">${error.message}</div>`;
                 }
@@ -493,10 +542,6 @@
             };
 
             const fetchAndDisplayTeacherAttendance = async (teacherId, teacherName) => {
-                const attendanceDetailsSection = document.getElementById('attendance-details-section');
-                const attendanceListEl = document.getElementById('attendance-list');
-                const attendanceTeacherNameEl = document.getElementById('attendance-teacher-name');
-
                 attendanceListEl.innerHTML = `<div class="p-6 text-center text-gray-500">Loading attendance...</div>`;
                 attendanceTeacherNameEl.textContent = teacherName;
                 attendanceDetailsSection.classList.remove('hidden');
@@ -514,11 +559,25 @@
                         return;
                     }
 
+                    // MODIFIED: Show check-in/out times in report
                     attendanceListEl.innerHTML = `
                         <table class="w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50"><tr><th scope="col" class="px-6 py-3">Date & Time</th><th scope="col" class="px-6 py-3">Location (Lat, Long)</th></tr></thead>
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Check-in Time</th>
+                                    <th scope="col" class="px-6 py-3">Check-out Time</th>
+                                    <th scope="col" class="px-6 py-3">Check-in Location</th>
+                                    <th scope="col" class="px-6 py-3">Check-out Location</th>
+                                </tr>
+                            </thead>
                             <tbody>
-                                ${result.data.map(a => `<tr class="bg-white border-b hover:bg-gray-50"><td data-label="Date & Time" class="px-6 py-4">${new Date(a.attendance_time).toLocaleString()}</td><td data-label="Location" class="px-6 py-4">${a.latitude}, ${a.longitude}</td></tr>`).join('')}
+                                ${result.data.map(a => `
+                                    <tr class="bg-white border-b hover:bg-gray-50">
+                                        <td data-label="Check-in Time" class="px-6 py-4">${new Date(a.check_in_time).toLocaleString()}</td>
+                                        <td data-label="Check-out Time" class="px-6 py-4">${a.check_out_time ? new Date(a.check_out_time).toLocaleString() : 'N/A'}</td>
+                                        <td data-label="Check-in Location" class="px-6 py-4">${a.check_in_latitude}, ${a.check_in_longitude}</td>
+                                        <td data-label="Check-out Location" class="px-6 py-4">${a.check_out_latitude ? `${a.check_out_latitude}, ${a.check_out_longitude}` : 'N/A'}</td>
+                                    </tr>`).join('')}
                             </tbody>
                         </table>`;
                 } catch (error) {
@@ -685,10 +744,69 @@
                 }
             });
 
+            // NEW: Function to check teacher's current attendance status
+            const fetchTeacherAttendanceStatus = async (teacherId) => {
+                attendanceLoading.style.display = 'block';
+                attendanceFormContainer.style.display = 'none';
+                attendanceStatusMessage.classList.add('hidden');
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/attendance/status/${teacherId}`);
+                    const statusData = await response.json();
+                    if (!response.ok) throw new Error(statusData.error || 'Failed to fetch status');
+                    
+                    updateAttendanceUI(statusData);
+                } catch (error) {
+                    showToast(error.message, true);
+                    attendanceLoading.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+                } finally {
+                    attendanceLoading.style.display = 'none';
+                }
+            };
+
+            // NEW: Function to update the teacher UI based on attendance status
+            const updateAttendanceUI = (statusData) => {
+                attendanceForm.reset();
+                photoPreview1.classList.add('hidden');
+                photoPreview2.classList.add('hidden');
+
+                switch (statusData.status) {
+                    case 'not_checked_in':
+                        teacherViewTitle.textContent = 'Mark Check-In';
+                        submitAttendanceBtn.textContent = 'Submit Check-In';
+                        submitAttendanceBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                        submitAttendanceBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                        attendanceStatusMessage.classList.add('hidden');
+                        attendanceFormContainer.style.display = 'block';
+                        currentAttendanceAction = 'check_in';
+                        startLocationCapture();
+                        break;
+                    case 'checked_in':
+                        teacherViewTitle.textContent = 'Mark Check-Out';
+                        submitAttendanceBtn.textContent = 'Submit Check-Out';
+                        submitAttendanceBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                        submitAttendanceBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                        statusMessageText.textContent = `You checked in at ${new Date(statusData.check_in_time).toLocaleTimeString()}. Please mark your check-out.`;
+                        attendanceStatusMessage.classList.remove('hidden');
+                        attendanceFormContainer.style.display = 'block';
+                        currentAttendanceAction = 'check_out';
+                        startLocationCapture();
+                        break;
+                    case 'completed':
+                        teacherViewTitle.textContent = 'Attendance Completed';
+                        statusMessageText.textContent = `Session completed for today. Checked in at ${new Date(statusData.check_in_time).toLocaleTimeString()} and checked out at ${new Date(statusData.check_out_time).toLocaleTimeString()}.`;
+                        attendanceStatusMessage.classList.remove('hidden');
+                        attendanceFormContainer.style.display = 'none';
+                        locationStatusEl.textContent = 'Session complete.';
+                        break;
+                }
+            };
+
+
             attendanceForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const loggedInTeacher = JSON.parse(sessionStorage.getItem('loggedInTeacher'));
-                if (!loggedInTeacher) {
+                // MODIFIED: Use the stored teacher ID
+                if (!loggedInTeacherId) {
                     showToast('Authentication error. Please log in again.', true); return;
                 }
                 if (!userLocation) {
@@ -697,7 +815,7 @@
                 const formData = new FormData(attendanceForm);
                 formData.append('latitude', userLocation.latitude);
                 formData.append('longitude', userLocation.longitude);
-                formData.append('teacher_id', loggedInTeacher.id);
+                formData.append('teacher_id', loggedInTeacherId);
                 
                 submitAttendanceBtn.disabled = true;
                 submitAttendanceBtn.textContent = 'Submitting...';
@@ -707,15 +825,14 @@
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.error || 'Failed to mark attendance');
                     
-                    showToast('Attendance marked successfully!');
-                    attendanceForm.reset();
-                    photoPreview1.classList.add('hidden');
-                    photoPreview2.classList.add('hidden');
+                    showToast(result.message); // Show success message from backend
+                    // MODIFIED: Re-fetch status to update UI
+                    fetchTeacherAttendanceStatus(loggedInTeacherId);
                 } catch (error) {
                     showToast(error.message, true);
                 } finally {
                     submitAttendanceBtn.disabled = false;
-                    submitAttendanceBtn.textContent = 'Mark My Attendance';
+                    // Text will be set by fetchTeacherAttendanceStatus
                 }
             });
 
@@ -746,8 +863,10 @@
 
             const setupAuthenticatedTeacherView = (teacher) => {
                 teacherGreeting.textContent = `Welcome, ${teacher.name}`;
+                loggedInTeacherId = teacher.id; // Store ID
                 showScreen(teacherScreen);
-                startLocationCapture();
+                // MODIFIED: Fetch status instead of just capturing location
+                fetchTeacherAttendanceStatus(teacher.id);
             };
 
             const main = () => {
@@ -769,3 +888,4 @@
     </script>
 </body>
 </html>
+

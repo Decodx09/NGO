@@ -1,4 +1,3 @@
-// ## 1. IMPORTS & INITIALIZATION ##
 const express = require('express');
 const mysql = require('mysql2/promise');
 const multer = require('multer');
@@ -7,23 +6,17 @@ const fs = require('fs');
 const cors = require('cors');
 require('dotenv').config();
 
-// --- NEW: GLOBAL ERROR HANDLERS ---
-// This catches unexpected errors (e.g., undefined variable)
+// --- GLOBAL ERROR HANDLERS ---
 process.on('uncaughtException', (err) => {
     console.error('!!! UNCAUGHT EXCEPTION !!!');
-    console.error('An unexpected error occurred. The app is shutting down.');
     console.error(err.stack || err);
-    // It's not safe to continue, so shut down.
-    // A process manager (like pm2) should restart it.
-    process.exit(1); 
+    process.exit(1);
 });
 
-// This catches errors from Promises (async/await) that don't have a .catch()
 process.on('unhandledRejection', (reason, promise) => {
     console.error('!!! UNHANDLED PROMISE REJECTION !!!');
     console.error('At:', promise);
     console.error('Reason:', reason.stack || reason);
-    // It's not safe to continue, so shut down.
     process.exit(1);
 });
 // --- END NEW: GLOBAL ERROR HANDLERS ---
@@ -41,7 +34,7 @@ app.use('/uploads', express.static('uploads'));
 
 // ## 2. CONFIGURATION ##
 
-// --- CHANGED: Set new allowed radius ---
+// --- Set allowed radius ---
 const ALLOWED_RADIUS_METERS = 50;
 
 // --- MySQL Database Connection ---
@@ -67,7 +60,9 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => {
         const teacherId = req.body.teacher_id || 'unknown';
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        const filename = `${teacherId}-${file.fieldname}-${uniqueSuffix}${path.extname(file.originalname)}`;
+        // NEW: Add action type to filename
+        const action = req.attendanceAction || 'photo'; // 'check_in' or 'check_out'
+        const filename = `${teacherId}-${action}-${file.fieldname}-${uniqueSuffix}${path.extname(file.originalname)}`;
         cb(null, filename);
     }
 });
@@ -103,7 +98,8 @@ app.post('/login/teacher', async (req, res) => {
         if (!employee_code || !password) {
             return res.status(400).json({ error: 'Employee code and password are required.' });
         }
-        const sql = 'SELECT id, name, employee_code, password FROM teachers WHERE employee_code = ?';
+        // MODIFIED: Select new location fields
+        const sql = 'SELECT id, name, employee_code, password, latitude, longitude FROM teachers WHERE employee_code = ?';
         const [rows] = await dbPool.execute(sql, [employee_code]);
 
         if (rows.length === 0) {
@@ -113,7 +109,14 @@ app.post('/login/teacher', async (req, res) => {
         if (teacher.password !== password) {
             return res.status(401).json({ success: false, error: 'Invalid employee code or password.' });
         }
-        const teacherData = { id: teacher.id, name: teacher.name, employee_code: teacher.employee_code };
+        // MODIFIED: Return location data
+        const teacherData = { 
+            id: teacher.id, 
+            name: teacher.name, 
+            employee_code: teacher.employee_code,
+            latitude: teacher.latitude,
+            longitude: teacher.longitude
+        };
         res.status(200).json({ success: true, message: 'Login successful.', teacher: teacherData });
     } catch (error) {
         console.error('Error during teacher login:', error);
@@ -244,7 +247,42 @@ app.delete('/teachers/:id', async (req, res) => {
 
 // === ATTENDANCE & REPORTING ROUTES ===
 
-app.post('/attendance', upload.fields([{ name: 'photo1', maxCount: 1 }, { name: 'photo2', maxCount: 1 }]), async (req, res) => {
+// NEW: Middleware to find today's session and determine action
+const getAttendanceAction = async (req, res, next) => {
+    try {
+        const { teacher_id } = req.body;
+        if (!teacher_id) {
+            return res.status(400).json({ error: 'teacher_id is missing.' });
+        }
+        
+        const todayDate = new Date().toISOString().slice(0, 10);
+        const checkSql = 'SELECT id, check_in_time, check_out_time FROM attendance WHERE teacher_id = ? AND DATE(check_in_time) = ?';
+        const [existing] = await dbPool.execute(checkSql, [teacher_id, todayDate]);
+
+        if (existing.length === 0) {
+            req.attendanceAction = 'check_in';
+            req.session = null;
+        } else {
+            const session = existing[0];
+            if (session.check_out_time !== null) {
+                req.attendanceAction = 'completed';
+                req.session = session;
+            } else {
+                req.attendanceAction = 'check_out';
+                req.session = session;
+            }
+        }
+        next();
+    } catch (error) {
+        console.error('Error in getAttendanceAction middleware:', error);
+        res.status(500).json({ error: 'An internal server error occurred while checking attendance status.' });
+    }
+};
+
+// MODIFIED: /attendance route now handles check-in AND check-out
+// FIXED: Swapped middleware order. 'upload' must run before 'getAttendanceAction' to populate req.body.
+app.post('/attendance', [upload.fields([{ name: 'photo1', maxCount: 1 }, { name: 'photo2', maxCount: 1 }]), getAttendanceAction], async (req, res) => {
+    
     const photos = req.files;
     const photo1 = photos.photo1 ? photos.photo1[0] : null;
     const photo2 = photos.photo2 ? photos.photo2[0] : null;
@@ -260,28 +298,26 @@ app.post('/attendance', upload.fields([{ name: 'photo1', maxCount: 1 }, { name: 
 
     try {
         const { teacher_id, latitude, longitude } = req.body;
+        const { attendanceAction, session } = req;
 
-        if (!teacher_id || !latitude || !longitude || !photo1 || !photo2) {
+        // --- Basic validation ---
+        if (!latitude || !longitude || !photo1 || !photo2) {
             cleanupFiles();
-            return res.status(400).json({ error: 'Missing required fields: teacher_id, latitude, longitude, and two photos.' });
+            return res.status(400).json({ error: 'Missing required fields: latitude, longitude, and two photos.' });
         }
-
-        const todayDate = new Date().toISOString().slice(0, 10);
-        const checkSql = 'SELECT id FROM attendance WHERE teacher_id = ? AND DATE(attendance_time) = ?';
-        const [existing] = await dbPool.execute(checkSql, [teacher_id, todayDate]);
-
-        if (existing.length > 0) {
-            cleanupFiles();
-            return res.status(409).json({ error: 'Attendance has already been marked for today.' });
-        }
-
-        const [teacherRows] = await dbPool.execute('SELECT latitude, longitude FROM teachers WHERE id = ?', [teacher_id]);
         
+        // --- Handle case where session is already completed ---
+        if (attendanceAction === 'completed') {
+            cleanupFiles();
+            return res.status(409).json({ error: 'Attendance session for today is already completed.' });
+        }
+        
+        // --- Location Validation ---
+        const [teacherRows] = await dbPool.execute('SELECT latitude, longitude FROM teachers WHERE id = ?', [teacher_id]);
         if (teacherRows.length === 0) {
             cleanupFiles();
             return res.status(404).json({ error: `Teacher with ID ${teacher_id} not found.` });
         }
-        
         const teacher = teacherRows[0];
         if (teacher.latitude == null || teacher.longitude == null) {
             cleanupFiles();
@@ -298,20 +334,48 @@ app.post('/attendance', upload.fields([{ name: 'photo1', maxCount: 1 }, { name: 
         if (distance > ALLOWED_RADIUS_METERS) {
             cleanupFiles();
             return res.status(403).json({
-                error: `You are out of the allowed range for attendance.`,
-                details: `Your distance from the designated location is ${distance.toFixed(2)}m. The allowed range is ${ALLOWED_RADIUS_METERS}m.`
+                error: `You are out of the allowed range.`,
+                details: `Your distance is ${distance.toFixed(2)}m. Allowed range is ${ALLOWED_RADIUS_METERS}m.`
             });
         }
         
         const photoPath1 = photo1.path;
         const photoPath2 = photo2.path;
-        const sql = 'INSERT INTO attendance (teacher_id, photo_path, photo_path2, latitude, longitude) VALUES (?, ?, ?, ?, ?)';
-        const [result] = await dbPool.execute(sql, [teacher_id, photoPath1, photoPath2, latitude, longitude]);
+
+        // --- Execute Check-in or Check-out ---
         
-        res.status(201).json({
-            message: 'Attendance marked successfully!',
-            attendanceId: result.insertId,
-        });
+        if (attendanceAction === 'check_in') {
+            // This is a new session (INSERT)
+            const sql = `
+                INSERT INTO attendance 
+                (teacher_id, check_in_time, check_in_photo_url1, check_in_photo_url2, check_in_latitude, check_in_longitude) 
+                VALUES (?, NOW(), ?, ?, ?, ?)
+            `;
+            const [result] = await dbPool.execute(sql, [teacher_id, photoPath1, photoPath2, latitude, longitude]);
+            
+            res.status(201).json({
+                message: 'Check-in successful!',
+                attendanceId: result.insertId,
+            });
+
+        } else if (attendanceAction === 'check_out') {
+            // This is an existing session (UPDATE)
+            const sql = `
+                UPDATE attendance 
+                SET check_out_time = NOW(), 
+                    check_out_photo_url1 = ?, 
+                    check_out_photo_url2 = ?, 
+                    check_out_latitude = ?, 
+                    check_out_longitude = ?
+                WHERE id = ?
+            `;
+            const [result] = await dbPool.execute(sql, [photoPath1, photoPath2, latitude, longitude, session.id]);
+
+            res.status(200).json({
+                message: 'Check-out successful!',
+                attendanceId: session.id,
+            });
+        }
 
     } catch (error) {
         cleanupFiles();
@@ -323,21 +387,62 @@ app.post('/attendance', upload.fields([{ name: 'photo1', maxCount: 1 }, { name: 
     }
 });
 
+// NEW: Endpoint for teacher to check their current status
+app.get('/attendance/status/:teacher_id', async (req, res) => {
+    try {
+        const { teacher_id } = req.params;
+        const todayDate = new Date().toISOString().slice(0, 10);
+        
+        const sql = 'SELECT id, check_in_time, check_out_time FROM attendance WHERE teacher_id = ? AND DATE(check_in_time) = ?';
+        const [rows] = await dbPool.execute(sql, [teacher_id, todayDate]);
+
+        if (rows.length === 0) {
+            return res.status(200).json({ status: 'not_checked_in' });
+        }
+        
+        const session = rows[0];
+        if (session.check_out_time === null) {
+            return res.status(200).json({ 
+                status: 'checked_in', 
+                check_in_time: session.check_in_time 
+            });
+        } else {
+            return res.status(200).json({ 
+                status: 'completed', 
+                check_in_time: session.check_in_time, 
+                check_out_time: session.check_out_time 
+            });
+        }
+    } catch (error) {
+        console.error('Error fetching attendance status:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+
 app.get('/attendance/today', async (req, res) => {
     try {
         const todayDate = new Date().toISOString().slice(0, 10);
+        // MODIFIED: Select new columns
         const sql = `
-            SELECT a.id as attendance_id, a.teacher_id, t.name as teacher_name, t.employee_code, 
-                   a.attendance_time, a.photo_path, a.photo_path2
+            SELECT 
+                a.id as attendance_id, a.teacher_id, t.name as teacher_name, t.employee_code, 
+                a.check_in_time, a.check_out_time, 
+                a.check_in_photo_url1, a.check_in_photo_url2,
+                a.check_out_photo_url1, a.check_out_photo_url2
             FROM attendance a JOIN teachers t ON a.teacher_id = t.id
-            WHERE DATE(a.attendance_time) = ? ORDER BY a.attendance_time DESC
+            WHERE DATE(a.check_in_time) = ? 
+            ORDER BY a.check_in_time DESC
         `;
         const [records] = await dbPool.execute(sql, [todayDate]);
 
+        // MODIFIED: Add all photo URLs
         const recordsWithPhotoUrl = records.map(record => ({
             ...record,
-            photo_url: record.photo_path ? `/uploads/${path.basename(record.photo_path)}` : null,
-            photo_url2: record.photo_path2 ? `/uploads/${path.basename(record.photo_path2)}` : null
+            check_in_photo_url1: record.check_in_photo_url1 ? `/uploads/${path.basename(record.check_in_photo_url1)}` : null,
+            check_in_photo_url2: record.check_in_photo_url2 ? `/uploads/${path.basename(record.check_in_photo_url2)}` : null,
+            check_out_photo_url1: record.check_out_photo_url1 ? `/uploads/${path.basename(record.check_out_photo_url1)}` : null,
+            check_out_photo_url2: record.check_out_photo_url2 ? `/uploads/${path.basename(record.check_out_photo_url2)}` : null
         }));
         
         res.status(200).json({ count: records.length, data: recordsWithPhotoUrl });
@@ -350,10 +455,11 @@ app.get('/attendance/today', async (req, res) => {
 app.get('/attendance/absent', async (req, res) => {
     try {
         const todayDate = new Date().toISOString().slice(0, 10);
+        // MODIFIED: Check against 'check_in_time'
         const sql = `
             SELECT t.id, t.name, t.employee_code, t.email
             FROM teachers t
-            LEFT JOIN attendance a ON t.id = a.teacher_id AND DATE(a.attendance_time) = ?
+            LEFT JOIN attendance a ON t.id = a.teacher_id AND DATE(a.check_in_time) = ?
             WHERE a.id IS NULL
             ORDER BY t.name
         `;
@@ -372,18 +478,26 @@ app.get('/attendance/report/all', async (req, res) => {
             return res.status(400).json({ error: 'Both startDate and endDate query parameters are required (YYYY-MM-DD).' });
         }
         
+        // MODIFIED: Select new columns
         const sql = `
-            SELECT a.id, a.teacher_id, t.name, t.employee_code, a.attendance_time, a.photo_path, a.photo_path2
+            SELECT 
+                a.id, a.teacher_id, t.name, t.employee_code, 
+                a.check_in_time, a.check_out_time, 
+                a.check_in_photo_url1, a.check_in_photo_url2,
+                a.check_out_photo_url1, a.check_out_photo_url2
             FROM attendance a JOIN teachers t ON a.teacher_id = t.id
-            WHERE DATE(a.attendance_time) BETWEEN ? AND ?
-            ORDER BY a.attendance_time DESC, t.name
+            WHERE DATE(a.check_in_time) BETWEEN ? AND ?
+            ORDER BY a.check_in_time DESC, t.name
         `;
         const [records] = await dbPool.execute(sql, [startDate, endDate]);
 
+        // MODIFIED: Add all photo URLs
         const recordsWithPhotoUrl = records.map(record => ({
             ...record,
-            photo_url: record.photo_path ? `/uploads/${path.basename(record.photo_path)}` : null,
-            photo_url2: record.photo_path2 ? `/uploads/${path.basename(record.photo_path2)}` : null
+            check_in_photo_url1: record.check_in_photo_url1 ? `/uploads/${path.basename(record.check_in_photo_url1)}` : null,
+            check_in_photo_url2: record.check_in_photo_url2 ? `/uploads/${path.basename(record.check_in_photo_url2)}` : null,
+            check_out_photo_url1: record.check_out_photo_url1 ? `/uploads/${path.basename(record.check_out_photo_url1)}` : null,
+            check_out_photo_url2: record.check_out_photo_url2 ? `/uploads/${path.basename(record.check_out_photo_url2)}` : null
         }));
 
         res.status(200).json({ count: records.length, data: recordsWithPhotoUrl });
@@ -402,18 +516,28 @@ app.get('/attendance/report/teacher/:teacher_id', async (req, res) => {
             return res.status(400).json({ error: 'Both startDate and endDate query parameters are required (YYYY-MM-DD).' });
         }
 
+        // MODIFIED: Select all new columns
         const sql = `
-            SELECT id, attendance_time, photo_path, photo_path2, latitude, longitude 
+            SELECT 
+                id, 
+                check_in_time, check_out_time,
+                check_in_photo_url1, check_in_photo_url2, 
+                check_out_photo_url1, check_out_photo_url2, 
+                check_in_latitude, check_in_longitude,
+                check_out_latitude, check_out_longitude
             FROM attendance 
-            WHERE teacher_id = ? AND DATE(attendance_time) BETWEEN ? AND ?
-            ORDER BY attendance_time DESC
+            WHERE teacher_id = ? AND DATE(check_in_time) BETWEEN ? AND ?
+            ORDER BY check_in_time DESC
         `;
         const [records] = await dbPool.execute(sql, [teacher_id, startDate, endDate]);
 
+        // MODIFIED: Add all photo URLs
         const recordsWithPhotoUrl = records.map(record => ({
             ...record,
-            photo_url: record.photo_path ? `/uploads/${path.basename(record.photo_path)}` : null,
-            photo_url2: record.photo_path2 ? `/uploads/${path.basename(record.photo_path2)}` : null
+            check_in_photo_url1: record.check_in_photo_url1 ? `/uploads/${path.basename(record.check_in_photo_url1)}` : null,
+            check_in_photo_url2: record.check_in_photo_url2 ? `/uploads/${path.basename(record.check_in_photo_url2)}` : null,
+            check_out_photo_url1: record.check_out_photo_url1 ? `/uploads/${path.basename(record.check_out_photo_url1)}` : null,
+            check_out_photo_url2: record.check_out_photo_url2 ? `/uploads/${path.basename(record.check_out_photo_url2)}` : null
         }));
         
         res.status(200).json({ count: records.length, data: recordsWithPhotoUrl });
@@ -429,16 +553,27 @@ app.get('/attendance/:teacher_id', async (req, res) => {
         const { teacher_id } = req.params;
         const { filter } = req.query; // 'week' or 'month'
 
-        let sql = 'SELECT id, teacher_id, attendance_time, photo_path, photo_path2, latitude, longitude FROM attendance WHERE teacher_id = ?';
+        // MODIFIED: Select new columns and filter by check_in_time
+        let sql = `
+            SELECT 
+                id, teacher_id, 
+                check_in_time, check_out_time,
+                check_in_photo_url1, check_in_photo_url2, 
+                check_out_photo_url1, check_out_photo_url2, 
+                check_in_latitude, check_in_longitude,
+                check_out_latitude, check_out_longitude
+            FROM attendance 
+            WHERE teacher_id = ?
+        `;
         const params = [teacher_id];
 
         if (filter === 'week') {
-            sql += ' AND attendance_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
+            sql += ' AND check_in_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)';
         } else if (filter === 'month') {
-            sql += ' AND MONTH(attendance_time) = MONTH(NOW()) AND YEAR(attendance_time) = YEAR(NOW())';
+            sql += ' AND MONTH(check_in_time) = MONTH(NOW()) AND YEAR(check_in_time) = YEAR(NOW())';
         }
         
-        sql += ' ORDER BY attendance_time DESC';
+        sql += ' ORDER BY check_in_time DESC';
 
         const [records] = await dbPool.execute(sql, params);
         
@@ -446,10 +581,13 @@ app.get('/attendance/:teacher_id', async (req, res) => {
             return res.status(200).json([]); // Return empty array for consistency
         }
 
+        // MODIFIED: Add all photo URLs
         const recordsWithPhotoUrl = records.map(record => ({
             ...record,
-            photo_url: record.photo_path ? `/uploads/${path.basename(record.photo_path)}` : null,
-            photo_url2: record.photo_path2 ? `/uploads/${path.basename(record.photo_path2)}` : null
+            check_in_photo_url1: record.check_in_photo_url1 ? `/uploads/${path.basename(record.check_in_photo_url1)}` : null,
+            check_in_photo_url2: record.check_in_photo_url2 ? `/uploads/${path.basename(record.check_in_photo_url2)}` : null,
+            check_out_photo_url1: record.check_out_photo_url1 ? `/uploads/${path.basename(record.check_out_photo_url1)}` : null,
+            check_out_photo_url2: record.check_out_photo_url2 ? `/uploads/${path.basename(record.check_out_photo_url2)}` : null
         }));
 
         res.status(200).json(recordsWithPhotoUrl);
@@ -470,7 +608,8 @@ app.get('/dashboard/stats', async (req, res) => {
         const [totalResult] = await dbPool.execute('SELECT COUNT(id) as total_teachers FROM teachers');
         const totalTeachers = totalResult[0].total_teachers;
 
-        const [presentResult] = await dbPool.execute('SELECT COUNT(DISTINCT teacher_id) as present_teachers FROM attendance WHERE DATE(attendance_time) = ?', [todayDate]);
+        // MODIFIED: Check against 'check_in_time'
+        const [presentResult] = await dbPool.execute('SELECT COUNT(DISTINCT teacher_id) as present_teachers FROM attendance WHERE DATE(check_in_time) = ?', [todayDate]);
         const presentTeachers = presentResult[0].present_teachers;
 
         const absentTeachers = totalTeachers - presentTeachers;
@@ -490,11 +629,10 @@ app.get('/dashboard/stats', async (req, res) => {
 
 // ## 5. START SERVER ##
 
-// --- New function to check database connection ---
+// --- function to check database connection ---
 const checkDatabaseConnection = async () => {
     console.log('Checking database connection...');
     try {
-        // Get a connection from the pool and run a simple query
         const [rows] = await dbPool.query('SELECT 1 + 1 AS solution');
         console.log(`Database connection successful! Test query result: 2`);
         return true;
@@ -530,4 +668,3 @@ const startServer = async () => {
 
 // Start the server
 startServer();
-
