@@ -691,7 +691,7 @@
                     submitAttendanceBtn.textContent = 'Submit Check-Out';
                     submitAttendanceBtn.classList.replace('bg-green-600', 'bg-blue-600');
                     submitAttendanceBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
-                } else if (status.action === 'complete' || status.status === 'complete') { // MODIFIED: Proactively handle new 'complete' status
+                } else if (status.action === 'complete' || status.status === 'complete' || status.status === 'completed') { // MODIFIED: Handle 'completed' status
                     teacherPageTitle.textContent = 'Attendance Complete';
                     attendanceForm.classList.add('hidden');
                     teacherStatusMessage.classList.remove('hidden');
@@ -1017,6 +1017,8 @@
     </script>
 </body>
 </html>
+
+
 
 
 
