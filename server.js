@@ -471,6 +471,38 @@ app.get('/attendance/absent', async (req, res) => {
     }
 });
 
+app.get('/attendance/report/weekly', async (req, res) => {
+    try {
+        const sql = `
+            SELECT 
+                a.id, a.teacher_id, t.name, t.employee_code, 
+                a.check_in_time, a.check_out_time, 
+                a.check_in_photo_url1, a.check_in_photo_url2,
+                a.check_out_photo_url1, a.check_out_photo_url2
+            FROM attendance a JOIN teachers t ON a.teacher_id = t.id
+            WHERE a.check_in_time >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+            ORDER BY a.check_in_time DESC, t.name
+        `;
+        const [records] = await dbPool.execute(sql);
+
+        // MODIFIED: Add all photo URLs
+        const recordsWithPhotoUrl = records.map(record => ({
+            ...record,
+            check_in_photo_url1: record.check_in_photo_url1 ? `/uploads/${path.basename(record.check_in_photo_url1)}` : null,
+            check_in_photo_url2: record.check_in_photo_url2 ? `/uploads/${path.basename(record.check_in_photo_url2)}` : null,
+            check_out_photo_url1: record.check_out_photo_url1 ? `/uploads/${path.basename(record.check_out_photo_url1)}` : null,
+            check_out_photo_url2: record.check_out_photo_url2 ? `/uploads/${path.basename(record.check_out_photo_url2)}` : null
+        }));
+
+        res.status(200).json({ count: records.length, data: recordsWithPhotoUrl });
+
+    } catch (error) {
+        console.error('Error fetching weekly attendance report:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+
 app.get('/attendance/report/all', async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
