@@ -67,11 +67,14 @@
                 color: #1f2937; /* text-gray-800 */
             }
             /* Special handling for actions cell */
-            .responsive-table td[data-label="Actions"] {
+            .responsive-table td[data-label="Actions"],
+            .responsive-table td[data-label="Photos"] { /* ADDED: Special handling for photos cell */
                 padding-left: 1.5rem; /* No label, so use full width */
-                justify-content: center; /* Center the div wrapper */
+                justify-content: flex-start; /* Align content to the left/start */
+                text-align: left;
             }
-            .responsive-table td[data-label="Actions"] > div {
+            .responsive-table td[data-label="Actions"] > div,
+            .responsive-table td[data-label="Photos"] > div { /* ADDED: Photo cell div */
                  width: 100%; /* Make the div full width */
             }
         }
@@ -153,18 +156,35 @@
                      <div id="attendance-list" class="responsive-table"></div>
                 </div>
             </section>
+            
+            <!-- *** MODIFIED REPORTS SECTION *** -->
             <section id="page-reports" class="page">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    <div>
-                        <h2 class="text-2xl font-semibold mb-4">Present Today</h2>
-                        <div id="present-list" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"></div>
+                <!-- Changed to a single column grid with more gap -->
+                <div class="grid grid-cols-1 gap-12">
+                    <!-- Today's Reports (side-by-side on large screens) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <h2 class="text-2xl font-semibold mb-4">Present Today</h2>
+                            <div id="present-list" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"></div>
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-semibold mb-4">Absent Today</h2>
+                            <div id="absent-list" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"></div>
+                        </div>
                     </div>
+                    
+                    <!-- *** NEW: Weekly Report Section *** -->
                     <div>
-                        <h2 class="text-2xl font-semibold mb-4">Absent Today</h2>
-                        <div id="absent-list" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"></div>
+                        <h2 class="text-2xl font-semibold mb-4">Weekly Report</h2>
+                        <!-- Added 'responsive-table' class to the container -->
+                        <div id="weekly-report-list" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden responsive-table">
+                            <!-- Content will be loaded by JS -->
+                        </div>
                     </div>
+                    <!-- *** END: New Section *** -->
                 </div>
             </section>
+            <!-- *** END: Modified Section *** -->
         </main>
     </div>
 
@@ -277,6 +297,9 @@
             const teachersListEl = document.getElementById('teachers-list');
             const presentListEl = document.getElementById('present-list');
             const absentListEl = document.getElementById('absent-list');
+            
+            // *** NEW: Selector for Weekly Report ***
+            const weeklyReportListEl = document.getElementById('weekly-report-list');
             
             const addTeacherBtn = document.getElementById('add-teacher-btn');
             const adminLogoutBtn = document.getElementById('admin-logout-btn');
@@ -579,6 +602,82 @@
                     absentListEl.innerHTML = `<div class"p-6 text-red-500">${error.message}</div>`;
                 }
             };
+            
+            // *** NEW: Function to fetch and display the weekly report ***
+            const fetchWeeklyReport = async () => {
+                weeklyReportListEl.innerHTML = `<div class="p-6 text-center text-gray-500">Loading weekly report...</div>`;
+                try {
+                    const response = await fetch(`${API_BASE_URL}/attendance/report/weekly`);
+                    
+                    // NEW: Robust error handling
+                    // Get the raw text from the response first
+                    const rawText = await response.text();
+                    
+                    let result;
+                    try {
+                        // Try to parse it as JSON
+                        result = JSON.parse(rawText);
+                    } catch (e) {
+                        // If parsing fails, it's not JSON (it's probably an HTML error page)
+                        // Show the raw HTML/text as the error. Added whitespace-pre-wrap for formatting.
+                        throw new Error(`Server returned an invalid response (expected JSON): <br><pre class="whitespace-pre-wrap text-left p-4 bg-gray-100 rounded-md">${rawText.length > 500 ? rawText.substring(0, 500) + '...' : rawText}</pre>`);
+                    }
+                    // END: Robust error handling
+                    
+                    if (!response.ok) {
+                         throw new Error(result.error || 'Failed to fetch weekly report');
+                    }
+                    
+                    if (result.data.length === 0) {
+                        weeklyReportListEl.innerHTML = `<div class="p-6 text-center text-gray-500">No attendance records found in the last 7 days.</div>`;
+                        return;
+                    }
+
+                    // Build responsive table
+                    weeklyReportListEl.innerHTML = `
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3">Teacher</th>
+                                    <th scope="col" class="px-6 py-3">Date</th>
+                                    <th scope="col" class="px-6 py-3">Check-in</th>
+                                    <th scope="col" class="px-6 py-3">Check-out</th>
+                                    <th scope="col" class="px-6 py-3">Photos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${result.data.map(r => `
+                                <tr class="bg-white border-b hover:bg-gray-50">
+                                    <!-- *** MODIFIED: Changed r.teacher_name to r.name *** -->
+                                    <td data-label="Teacher" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${r.name} <span class="block text-xs font-normal text-gray-500 sm:hidden">(${r.employee_code})</span></td>
+                                    <td data-label="Date" class="px-6 py-4">${new Date(r.check_in_time).toLocaleDateString()}</td>
+                                    <td data-label="Check-in" class="px-6 py-4 text-green-600">${new Date(r.check_in_time).toLocaleTimeString()}</td>
+                                    <td data-label="Check-out" class="px-6 py-4 ${r.check_out_time ? 'text-red-600' : 'text-gray-400'}">${r.check_out_time ? new Date(r.check_out_time).toLocaleTimeString() : 'N/A'}</td>
+                                    <td data-label="Photos" class="px-6 py-4">
+                                        <div class="flex flex-col gap-1">
+                                            <div class="flex gap-2 items-center">
+                                                <span class="text-xs text-gray-500 w-8">In:</span>
+                                                <a href="${API_BASE_URL}${r.check_in_photo_url1}" target="_blank" class="text-sm text-indigo-600 hover:underline">Photo 1</a> 
+                                                <a href="${API_BASE_URL}${r.check_in_photo_url2}" target="_blank" class="text-sm text-indigo-600 hover:underline">Photo 2</a>
+                                            </div>
+                                            ${r.check_out_photo_url1 ? `
+                                            <div class="flex gap-2 items-center">
+                                                <span class="text-xs text-gray-500 w-8">Out:</span>
+                                                <a href="${API_BASE_URL}${r.check_out_photo_url1}" target="_blank" class="text-sm text-indigo-600 hover:underline">Photo 1</a> 
+                                                <a href="${API_BASE_URL}${r.check_out_photo_url2}" target="_blank" class="text-sm text-indigo-600 hover:underline">Photo 2</a>
+                                            </div>` : ''}
+                                        </div>
+                                    </td>
+                                </tr>`).join('')}
+                            </tbody>
+                        </table>`;
+                } catch (error) {
+                    // This will now display the helpful error message
+                    weeklyReportListEl.innerHTML = `<div class="p-6 text-red-500">${error.message}</div>`;
+                }
+            };
+            // *** END: New Function ***
+
 
             const deleteTeacher = async (teacherId) => {
                 try {
@@ -604,7 +703,8 @@
                 attendanceDetailsSection.classList.remove('hidden');
 
                 try {
-                    const response = await fetch(`${API_BASE_URL}/attendance/report/teacher/${teacherId}?startDate=2000-01-01&endDate=2100-01-01`); // Wide range
+                    // Use a wide date range to get all records
+                    const response = await fetch(`${API_BASE_URL}/attendance/report/teacher/${teacherId}?startDate=2000-01-01&endDate=2100-01-01`);
                     const result = await response.json();
 
                     if (!response.ok) {
@@ -656,7 +756,7 @@
                         throw new Error(errorMsg);
                     }
 
-                    const result = await response.json(); // { action: 'checkin' | 'checkout' | 'complete', session: {...} | null }
+                    const result = await response.json();
                     currentTeacherSession = result;
                     updateTeacherUI(result);
 
@@ -673,14 +773,14 @@
             const updateTeacherUI = (status) => {
                 teacherLoading.classList.add('hidden');
 
-                if (status.status === 'not_checked_in' || status.action === 'checkin') { // MODIFIED: Handle 'status' property from server
+                if (status.status === 'not_checked_in') { 
                     teacherPageTitle.textContent = 'Mark Check-In';
                     teacherStatusMessage.classList.add('hidden');
                     attendanceForm.classList.remove('hidden');
                     submitAttendanceBtn.textContent = 'Submit Check-In';
                     submitAttendanceBtn.classList.replace('bg-blue-600', 'bg-green-600');
                     submitAttendanceBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
-                } else if (status.action === 'checkout' || status.status === 'checked_in') { // MODIFIED: Handle new 'checked_in' status
+                } else if (status.status === 'checked_in') { 
                     teacherPageTitle.textContent = 'Mark Check-Out';
                     teacherStatusMessage.classList.remove('hidden');
                     attendanceForm.classList.remove('hidden');
@@ -688,14 +788,13 @@
                     teacherStatusHeading.textContent = 'You are checked in!';
                     teacherStatusHeading.classList.remove('text-red-500');
                     
-                    // MODIFIED: Check for check_in_time in both possible locations
-                    const checkInTime = status.session ? status.session.check_in_time : status.check_in_time;
+                    const checkInTime = status.check_in_time;
                     teacherStatusDetails.textContent = `Checked in at: ${new Date(checkInTime).toLocaleTimeString()}`;
                     
                     submitAttendanceBtn.textContent = 'Submit Check-Out';
                     submitAttendanceBtn.classList.replace('bg-green-600', 'bg-blue-600');
                     submitAttendanceBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
-                } else if (status.action === 'complete' || status.status === 'complete' || status.status === 'completed') { // MODIFIED: Handle 'completed' status
+                } else if (status.status === 'completed') {
                     teacherPageTitle.textContent = 'Attendance Complete';
                     attendanceForm.classList.add('hidden');
                     teacherStatusMessage.classList.remove('hidden');
@@ -703,11 +802,10 @@
                     teacherStatusHeading.textContent = 'Session Complete!';
                     teacherStatusHeading.classList.remove('text-red-500');
                     
-                    // MODIFIED: Check for check_out_time in both possible locations
-                    const checkOutTime = status.session ? status.session.check_out_time : status.check_out_time;
+                    const checkOutTime = status.check_out_time;
                     teacherStatusDetails.textContent = `You checked out at: ${new Date(checkOutTime).toLocaleTimeString()}`;
                 } else {
-                    // --- NEW: Handle unknown states ---
+                    // Handle unknown states
                     console.error("Unknown attendance status received:", status);
                     teacherPageTitle.textContent = 'Live Attendance';
                     attendanceForm.classList.add('hidden');
@@ -715,8 +813,7 @@
                     
                     teacherStatusHeading.textContent = 'Unable to load status';
                     teacherStatusHeading.classList.add('text-red-500');
-                    teacherStatusDetails.textContent = 'Could not determine your attendance status. Please try logging out and back in. If the problem persists, contact an admin.';
-                    // --- End of new code ---
+                    teacherStatusDetails.textContent = 'Could not determine your attendance status. Please try logging out and back in.';
                 }
             };
 
@@ -986,6 +1083,7 @@
                 fetchTeachersForAdmin();
                 fetchTodaysAttendance();
                 fetchAbsentTeachers();
+                fetchWeeklyReport(); // *** ADDED: Call new function ***
             };
 
             const setupAuthenticatedTeacherView = (teacher) => {
@@ -1021,9 +1119,4 @@
     </script>
 </body>
 </html>
-
-
-
-
-
 
