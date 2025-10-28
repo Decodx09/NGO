@@ -66,6 +66,13 @@
                 font-weight: 600;
                 color: #1f2937; /* text-gray-800 */
             }
+            
+            /* *** NEW RULE TO FIX OVERLAP *** */
+            .responsive-table td[data-label="Actions"]:before,
+            .responsive-table td[data-label="Photos"]:before {
+                display: none; /* Hide the label for these specific cells */
+            }
+            
             /* Special handling for actions cell */
             .responsive-table td[data-label="Actions"],
             .responsive-table td[data-label="Photos"] { /* ADDED: Special handling for photos cell */
