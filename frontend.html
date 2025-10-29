@@ -7,13 +7,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
         .tab-active { 
             border-bottom: 2px solid #4f46e5; 
             color: #4f46e5;
             font-weight: 600;
         }
-        .tab { border-bottom: 2px solid transparent; }
+        .tab { 
+            border-bottom: 2px solid transparent; 
+            transition: all 0.2s ease-in-out;
+        }
         .page { display: none; animation: fadeIn 0.5s; }
         .page-active { display: block; }
         @keyframes fadeIn {
@@ -22,7 +29,29 @@
         }
         .screen { display: none; }
 
-        /* --- Mobile Optimization for Tables --- */
+        /* --- Loading Spinner --- */
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border-left-color: #4f46e5; /* indigo-600 */
+            animation: spin 1s ease infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- Skeleton Loader --- */
+        .skeleton {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            50% { opacity: 0.6; }
+        }
+
+        /* --- Mobile Optimization for Tables (User's Original Style) --- */
         @media (max-width: 767px) { /* Tailwind 'md' breakpoint */
             .responsive-table table, 
             .responsive-table thead, 
@@ -67,174 +96,224 @@
                 color: #1f2937; /* text-gray-800 */
             }
             
-            /* *** NEW RULE TO FIX OVERLAP *** */
+            /* --- User's Fix (Preserved) --- */
             .responsive-table td[data-label="Actions"]:before,
             .responsive-table td[data-label="Photos"]:before {
-                display: none; /* Hide the label for these specific cells */
+                display: none; 
             }
-            
-            /* Special handling for actions cell */
             .responsive-table td[data-label="Actions"],
-            .responsive-table td[data-label="Photos"] { /* ADDED: Special handling for photos cell */
-                padding-left: 1.5rem; /* No label, so use full width */
-                justify-content: flex-start; /* Align content to the left/start */
+            .responsive-table td[data-label="Photos"] {
+                padding-left: 1.5rem; 
+                justify-content: flex-start;
                 text-align: left;
             }
             .responsive-table td[data-label="Actions"] > div,
-            .responsive-table td[data-label="Photos"] > div { /* ADDED: Photo cell div */
-                 width: 100%; /* Make the div full width */
+            .responsive-table td[data-label="Photos"] > div {
+                 width: 100%;
             }
         }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="bg-gray-100 text-gray-800">
 
-    <div id="login-screen" class="screen min-h-screen flex items-center justify-center p-4">
-        <div class="w-full max-w-md text-center p-8">
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">Attendance System</h1>
-            <p class="text-gray-500 mb-10">Please select your role to continue</p>
-            
-            <div id="role-selection" class="space-y-4">
-                <button id="show-admin-login-btn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">Admin Login</button>
-                <button id="show-teacher-login-btn" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">Teacher Login</button>
+    <!-- ===== Upgraded Login Screen ===== -->
+    <div id="login-screen" class="screen min-h-screen flex flex-col items-center justify-center p-4">
+        <div class="w-full max-w-md">
+            <!-- Logo -->
+            <div class="flex justify-center mb-6">
+                <div class="bg-indigo-600 text-white p-3 rounded-full">
+                    <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 21h-2.25m-2.25H5.25A2.25 2.25 0 0 1 3 18.75V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25v13.5A2.25 2.25 0 0 1 18.75 21Z" />
+                    </svg>
+                </div>
             </div>
+            
+            <h1 class="text-3xl font-bold text-gray-900 mb-2 text-center">Attendance System</h1>
+            <p class="text-gray-500 mb-8 text-center">Please select your role to continue</p>
+            
+            <!-- Card Wrapper -->
+            <div class="bg-white p-8 rounded-xl shadow-lg transition-all duration-300">
+                <div id="role-selection" class="space-y-4">
+                    <button id="show-admin-login-btn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 12h9.75M10.5 18h9.75M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 6.75h.007v.008H4.125v-.008Zm0 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 6.75h.007v.008H4.125v-.008Zm0 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" /></svg>
+                        Admin Login
+                    </button>
+                    <button id="show-teacher-login-btn" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center gap-2">
+                        <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
+                        Teacher Login
+                    </button>
+                </div>
 
-            <form id="admin-login-form" class="hidden text-left">
-                <h2 class="text-2xl font-semibold mb-6 text-center">Admin Login</h2>
-                <div class="mb-4">
-                    <label for="admin-username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                    <input type="text" id="admin-username" name="username" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
-                </div>
-                <div class="mb-6">
-                    <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="admin-password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
-                </div>
-                <div class="space-y-3">
-                    <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">Login</button>
-                    <button type="button" class="back-to-roles-btn w-full bg-gray-200 text-gray-800 py-2 rounded-lg font-medium hover:bg-gray-300 transition">Back</button>
-                </div>
-            </form>
+                <form id="admin-login-form" class="hidden text-left animate-fadeIn">
+                    <h2 class="text-2xl font-semibold mb-6 text-center">Admin Login</h2>
+                    <div class="mb-4">
+                        <label for="admin-username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <input type="text" id="admin-username" name="username" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="admin-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="admin-password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" required>
+                    </div>
+                    <div class="space-y-3">
+                        <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">Login</button>
+                        <button type="button" class="back-to-roles-btn w-full bg-gray-200 text-gray-800 py-2 rounded-lg font-medium hover:bg-gray-300 transition">Back</button>
+                    </div>
+                </form>
 
-            <form id="teacher-login-form" class="hidden text-left">
-                <h2 class="text-2xl font-semibold mb-6 text-center">Teacher Login</h2>
-                <div class="mb-4">
-                    <label for="employee-code-login" class="block text-sm font-medium text-gray-700 mb-1">Employee Code</label>
-                    <input type="text" id="employee-code-login" name="employee_code" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
-                </div>
-                <div class="mb-6">
-                    <label for="teacher-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="teacher-password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md" required>
-                </div>
-                <div class="space-y-3">
-                    <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">Login & Proceed</button>
-                    <button type="button" class="back-to-roles-btn w-full bg-gray-200 text-gray-800 py-2 rounded-lg font-medium hover:bg-gray-300 transition">Back</button>
-                </div>
-            </form>
+                <form id="teacher-login-form" class="hidden text-left animate-fadeIn">
+                    <h2 class="text-2xl font-semibold mb-6 text-center">Teacher Login</h2>
+                    <div class="mb-4">
+                        <label for="employee-code-login" class="block text-sm font-medium text-gray-700 mb-1">Employee Code</label>
+                        <input type="text" id="employee-code-login" name="employee_code" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="teacher-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" id="teacher-password" name="password" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500" required>
+                    </div>
+                    <div class="space-y-3">
+                        <button type="submit" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">Login & Proceed</button>
+                        <button type="button" class="back-to-roles-btn w-full bg-gray-200 text-gray-800 py-2 rounded-lg font-medium hover:bg-gray-300 transition">Back</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
+    <!-- ===== End Upgraded Login Screen ===== -->
 
+    <!-- ===== Upgraded Admin Screen ===== -->
     <div id="admin-screen" class="screen container mx-auto p-4 md:p-8">
-        <header class="mb-8 flex justify-between items-center">
+        <header class="mb-8 p-6 bg-white rounded-lg shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
             <div>
-                <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Teacher Attendance</h1>
-                <p class="text-gray-500 mt-1">Admin Dashboard</p>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+                <p class="text-gray-500 mt-1">Teacher Attendance Management</p>
             </div>
-            <button id="admin-logout-btn" class="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition text-sm sm:text-base">Logout</button>
+            <button id="admin-logout-btn" class="w-full sm:w-auto bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-600 transition flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" /></svg>
+                Logout
+            </button>
         </header>
-        <nav class="mb-8 border-b border-gray-200">
+        
+        <nav class="mb-8 bg-white shadow-sm rounded-lg">
             <ul class="flex flex-wrap -mb-px text-sm font-medium text-center text-gray-500">
-                <li class="mr-2"><a href="#" id="tab-dashboard" class="inline-block p-4 tab tab-active">Dashboard</a></li>
-                <li class="mr-2"><a href="#" id="tab-teachers" class="inline-block p-4 tab">Teachers</a></li>
-                <li class="mr-2"><a href="#" id="tab-reports" class="inline-block p-4 tab">Reports</a></li>
+                <li class="mr-2"><a href="#" id="tab-dashboard" class="inline-block p-4 tab tab-active rounded-t-lg">Dashboard</a></li>
+                <li class="mr-2"><a href="#" id="tab-teachers" class="inline-block p-4 tab rounded-t-lg">Teachers</a></li>
+                <li class="mr-2"><a href="#" id="tab-reports" class="inline-block p-4 tab rounded-t-lg">Reports</a></li>
             </ul>
         </nav>
+
         <main>
             <section id="page-dashboard" class="page page-active">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="dashboard-stats"></div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="dashboard-stats">
+                    <!-- Skeleton Loader for Stats -->
+                </div>
             </section>
             <section id="page-teachers" class="page">
-                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4 sm:gap-0">
-                    <h2 class="text-2xl font-semibold">Teacher Roster</h2>
-                    <button id="add-teacher-btn" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">Add Teacher</button>
-                </div>
-                 <div id="teachers-list" class="responsive-table"></div>
-                <div id="attendance-details-section" class="mt-8 hidden">
-                    <h3 class="text-xl font-semibold mb-4">Attendance History for <span id="attendance-teacher-name"></span></h3>
-                     <div id="attendance-list" class="responsive-table"></div>
+                <div class="bg-white p-6 rounded-lg shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4 sm:gap-0">
+                        <h2 class="text-2xl font-semibold">Teacher Roster</h2>
+                        <button id="add-teacher-btn" class="w-full sm:w-auto bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                            Add Teacher
+                        </button>
+                    </div>
+                    <div id="teachers-list-container" class="border border-gray-200 rounded-lg overflow-hidden">
+                        <div id="teachers-list" class="responsive-table">
+                            <!-- Spinner will be injected here -->
+                        </div>
+                    </div>
+                    <div id="attendance-details-section" class="mt-8 hidden">
+                        <h3 class="text-xl font-semibold mb-4">Attendance History for <span id="attendance-teacher-name"></span></h3>
+                        <div id="attendance-list" class="responsive-table border border-gray-200 rounded-lg overflow-hidden"></div>
+                    </div>
                 </div>
             </section>
             
-            <!-- *** MODIFIED REPORTS SECTION *** -->
             <section id="page-reports" class="page">
-                <!-- Changed to a single column grid with more gap -->
                 <div class="grid grid-cols-1 gap-12">
-                    <!-- Today's Reports (side-by-side on large screens) -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
                             <h2 class="text-2xl font-semibold mb-4">Present Today</h2>
-                            <div id="present-list" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"></div>
+                            <div id="present-list" class="border border-gray-200 rounded-lg overflow-hidden">
+                                <!-- Skeleton loader will be injected here -->
+                            </div>
                         </div>
-                        <div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
                             <h2 class="text-2xl font-semibold mb-4">Absent Today</h2>
-                            <div id="absent-list" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"></div>
+                            <div id="absent-list" class="border border-gray-200 rounded-lg overflow-hidden">
+                                <!-- Skeleton loader will be injected here -->
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- *** NEW: Weekly Report Section *** -->
-                    <div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
                         <h2 class="text-2xl font-semibold mb-4">Weekly Report</h2>
-                        <!-- Added 'responsive-table' class to the container -->
-                        <div id="weekly-report-list" class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden responsive-table">
-                            <!-- Content will be loaded by JS -->
+                        <div id="weekly-report-list" class="border border-gray-200 rounded-lg overflow-hidden responsive-table">
+                            <!-- Spinner will be injected here -->
                         </div>
                     </div>
-                    <!-- *** END: New Section *** -->
                 </div>
             </section>
-            <!-- *** END: Modified Section *** -->
         </main>
     </div>
+    <!-- ===== End Upgraded Admin Screen ===== -->
 
+    <!-- ===== Upgraded Teacher Screen ===== -->
     <div id="teacher-screen" class="screen min-h-screen flex flex-col p-4">
-        <div class="w-full max-w-xl mx-auto">
-             <header class="w-full py-4 flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
-                <h1 class="text-2xl font-bold text-gray-900" id="teacher-page-title">Live Attendance</h1>
-                <div class="flex items-center gap-4">
+        <div class="w-full max-w-2xl mx-auto">
+             <header class="w-full p-6 bg-white rounded-lg shadow-sm flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                <h1 class="text-2xl font-bold text-gray-900 text-center sm:text-left" id="teacher-page-title">Live Attendance</h1>
+                <div class="flex flex-col sm:flex-row items-center gap-4">
                     <span id="teacher-greeting" class="text-gray-700 font-medium text-center"></span>
-                    <button id="teacher-logout-btn" class="text-sm bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition">Logout</button>
+                    <button id="teacher-logout-btn" class="text-sm bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition flex items-center gap-2">
+                         <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" /></svg>
+                        Logout
+                    </button>
                 </div>
             </header>
             
             <main id="teacher-main-content" class="bg-white p-6 sm:p-8 rounded-lg shadow-sm border border-gray-200">
                 <div id="teacher-loading" class="text-center p-8 text-gray-500">
-                    <p>Loading attendance status...</p>
+                    <div class="flex justify-center items-center">
+                        <div class="spinner"></div>
+                    </div>
+                    <p class="mt-4">Loading attendance status...</p>
                 </div>
 
-                <div id="teacher-status-message" class="hidden text-center p-8">
-                    <h3 class="text-xl font-semibold text-gray-800" id="teacher-status-heading"></h3>
+                <!-- Upgraded Status Message -->
+                <div id="teacher-status-message" class="hidden p-8 text-center">
+                    <h3 class="text-xl font-semibold text-gray-800" id="teacher-status-heading">
+                        <!-- Icon and text will be injected by JS -->
+                    </h3>
                     <p class="text-gray-600 mt-2" id="teacher-status-details"></p>
                 </div>
 
                 <form id="attendance-form" class="hidden">
-                    <div class="mb-6">
-                        <label for="photo1" class="block text-sm font-medium text-gray-700 mb-1">Live Photograph 1</label>
-                        <input type="file" id="photo1" name="photo1" accept="image/*" capture="environment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" required>
-                        <img id="photo-preview-1" src="" alt="Photo 1 Preview" class="mt-4 rounded-lg hidden w-full"/>
-                    </div>
-                    <div class="mb-6">
-                        <label for="photo2" class="block text-sm font-medium text-gray-700 mb-1">Live Photograph 2</label>
-                        <input type="file" id="photo2" name="photo2" accept="image/*" capture="environment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100" required>
-                        <img id="photo-preview-2" src="" alt="Photo 2 Preview" class="mt-4 rounded-lg hidden w-full"/>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <label for="photo1" class="block text-sm font-medium text-gray-700 mb-2">Live Photograph 1</label>
+                            <input type="file" id="photo1" name="photo1" accept="image/*" capture="environment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 cursor-pointer" required>
+                            <img id="photo-preview-1" src="" alt="Photo 1 Preview" class="mt-4 rounded-lg hidden w-full border border-gray-200 shadow-sm"/>
+                        </div>
+                        <div>
+                            <label for="photo2" class="block text-sm font-medium text-gray-700 mb-2">Live Photograph 2</label>
+                            <input type="file" id="photo2" name="photo2" accept="image/*" capture="environment" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100 cursor-pointer" required>
+                            <img id="photo-preview-2" src="" alt="Photo 2 Preview" class="mt-4 rounded-lg hidden w-full border border-gray-200 shadow-sm"/>
+                        </div>
                     </div>
                     <div class="text-center">
-                        <button type="submit" id="submit-attendance-btn" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400">Mark My Attendance</button>
-                        <p id="location-status" class="text-sm text-gray-500 mt-4">Getting your location...</p>
+                        <button type="submit" id="submit-attendance-btn" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 text-lg">Mark My Attendance</button>
+                        <p id="location-status" class="text-sm text-gray-500 mt-4 flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
+                            Getting your location...
+                        </p>
                     </div>
                 </form>
             </main>
         </div>
     </div>
+    <!-- ===== End Upgraded Teacher Screen ===== -->
 
+    <!-- ===== Modals and Toast (Unchanged but will look better in context) ===== -->
     <div id="teacher-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-10 p-4">
         <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
             <h2 id="teacher-modal-title" class="text-2xl font-semibold mb-6">Add New Teacher</h2>
@@ -265,6 +344,9 @@
     
     <div id="confirm-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center hidden z-20 p-4">
         <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-sm text-center">
+            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                <svg class="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+            </div>
             <h2 class="text-xl font-bold mb-4">Are you sure?</h2>
             <p id="confirm-message" class="text-gray-600 mb-6"></p>
             <div class="flex flex-col sm:flex-row justify-center gap-4">
@@ -304,8 +386,6 @@
             const teachersListEl = document.getElementById('teachers-list');
             const presentListEl = document.getElementById('present-list');
             const absentListEl = document.getElementById('absent-list');
-            
-            // *** NEW: Selector for Weekly Report ***
             const weeklyReportListEl = document.getElementById('weekly-report-list');
             
             const addTeacherBtn = document.getElementById('add-teacher-btn');
@@ -351,11 +431,39 @@
             let userLocation = null;
             let teacherIdToDelete = null;
             let editModeTeacherId = null;
-            let currentTeacherSession = null; // Stores { action: 'checkin'/'checkout', session: {...} }
-            let resizedPhoto1 = null; // NEW: Store for resized photo 1
-            let resizedPhoto2 = null; // NEW: Store for resized photo 2
+            let currentTeacherSession = null; 
+            let resizedPhoto1 = null;
+            let resizedPhoto2 = null;
 
             // --- UI & Helper Functions ---
+
+            // NEW: Loading spinner and skeleton generators
+            const getSpinnerHtml = (message = 'Loading...') => {
+                return `<div class="flex flex-col justify-center items-center p-8 text-gray-500">
+                            <div class="spinner"></div>
+                            <p class="mt-4 text-sm">${message}</p>
+                        </div>`;
+            };
+
+            const getStatSkeletonHtml = () => {
+                return `
+                    <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm skeleton"><div class="h-4 bg-gray-200 rounded-md w-1/2"></div><div class="h-8 bg-gray-200 rounded-md w-1/4 mt-2"></div></div>
+                    <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm skeleton"><div class="h-4 bg-gray-200 rounded-md w-1/2"></div><div class="h-8 bg-gray-200 rounded-md w-1/4 mt-2"></div></div>
+                    <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm skeleton"><div class="h-4 bg-gray-200 rounded-md w-1/2"></div><div class="h-8 bg-gray-200 rounded-md w-1/4 mt-2"></div></div>
+                `;
+            };
+            
+            const getListSkeletonHtml = (count = 3) => {
+                let html = '';
+                for (let i = 0; i < count; i++) {
+                    html += `<div class="p-4 border-b last:border-b-0 skeleton">
+                                <div class="h-5 bg-gray-200 rounded-md w-3/4"></div>
+                                <div class="h-4 bg-gray-200 rounded-md w-1/2 mt-2"></div>
+                             </div>`;
+                }
+                return html;
+            };
+
             const showScreen = (screen) => {
                 document.querySelectorAll('.screen').forEach(s => s.style.display = 'none');
                 const displayStyle = (screen === adminScreen) ? 'block' : 'flex';
@@ -405,12 +513,16 @@
                                 latitude: position.coords.latitude,
                                 longitude: position.coords.longitude,
                             };
-                            locationStatusEl.textContent = 'Location captured successfully.';
+                            locationStatusEl.innerHTML = `
+                                <svg class="w-4 h-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 21h-2.25m-2.25H5.25A2.25 2.25 0 0 1 3 18.75V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25v13.5A2.25 2.25 0 0 1 18.75 21Z" /></svg>
+                                Location captured successfully.`;
                             locationStatusEl.classList.replace('text-gray-500', 'text-green-600');
                         },
                         (error) => {
                             userLocation = null;
-                            locationStatusEl.textContent = 'Error: Please enable location services.';
+                            locationStatusEl.innerHTML = `
+                                <svg class="w-4 h-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" /></svg>
+                                Error: Please enable location services.`;
                             locationStatusEl.classList.replace('text-gray-500', 'text-red-600');
                             showToast('Please enable location services to mark attendance.', true);
                         }
@@ -430,14 +542,7 @@
                 addTeacherForm.elements.password.required = true;
             };
 
-            /**
-             * NEW: Resizes and compresses an image file.
-             * @param {File} file - The original image file.
-             * @param {number} maxWidth - The maximum width for the output image.
-             * @param {number} maxHeight - The maximum height for the output image.
-             * @param {number} quality - The JPEG compression quality (0.0 to 1.0).
-             * @returns {Promise<File>} A promise that resolves with the resized File object.
-             */
+            // User's original, excellent resize function (unchanged)
             function resizeImage(file, maxWidth = 1024, maxHeight = 1024, quality = 0.7) {
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
@@ -448,8 +553,6 @@
                         img.onload = () => {
                             let width = img.width;
                             let height = img.height;
-
-                            // Calculate new dimensions
                             if (width > height) {
                                 if (width > maxWidth) {
                                     height *= maxWidth / width;
@@ -461,28 +564,22 @@
                                     height = maxHeight;
                                 }
                             }
-
                             const canvas = document.createElement('canvas');
                             canvas.width = width;
                             canvas.height = height;
                             const ctx = canvas.getContext('2d');
-                            
-                            // Draw image on canvas
                             ctx.drawImage(img, 0, 0, width, height);
-
-                            // Convert canvas to blob
                             canvas.toBlob((blob) => {
                                 if (!blob) {
                                     reject(new Error('Canvas to Blob conversion failed.'));
                                     return;
                                 }
-                                // Create a new File object from the blob
                                 const resizedFile = new File([blob], file.name, {
                                     type: 'image/jpeg',
                                     lastModified: Date.now(),
                                 });
                                 resolve(resizedFile);
-                            }, 'image/jpeg', quality); // Use 'image/jpeg' for compression
+                            }, 'image/jpeg', quality);
                         };
                         img.onerror = (error) => reject(error);
                     };
@@ -492,22 +589,48 @@
 
             // --- API Fetch Functions ---
             const fetchDashboardStats = async () => {
-                dashboardStatsEl.innerHTML = '<p class="text-center col-span-3">Loading stats...</p>';
+                dashboardStatsEl.innerHTML = getStatSkeletonHtml(); // Use skeleton
                 try {
                     const response = await fetch(`${API_BASE_URL}/dashboard/stats`);
                     const data = await response.json();
                     if (!response.ok) throw new Error(data.error || 'Failed to fetch stats');
+                    
+                    // Upgraded stats cards with icons
                     dashboardStatsEl.innerHTML = `
-                        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-gray-500">Total Teachers</h3><p class="text-3xl font-semibold mt-1">${data.total_teachers}</p></div>
-                        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-green-600">Present Today</h3><p class="text-3xl font-semibold mt-1">${data.present_today}</p></div>
-                        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm"><h3 class="text-sm font-medium text-red-600">Absent Today</h3><p class="text-3xl font-semibold mt-1">${data.absent_today}</p></div>`;
+                        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm flex items-center gap-4">
+                            <div class="flex-shrink-0 bg-indigo-100 text-indigo-600 p-3 rounded-full">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-500">Total Teachers</h3>
+                                <p class="text-3xl font-semibold mt-1">${data.total_teachers}</p>
+                            </div>
+                        </div>
+                        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm flex items-center gap-4">
+                             <div class="flex-shrink-0 bg-green-100 text-green-600 p-3 rounded-full">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 21h-2.25m-2.25H5.25A2.25 2.25 0 0 1 3 18.75V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25v13.5A2.25 2.25 0 0 1 18.75 21Z" /></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-green-600">Present Today</h3>
+                                <p class="text-3xl font-semibold mt-1">${data.present_today}</p>
+                            </div>
+                        </div>
+                        <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm flex items-center gap-4">
+                             <div class="flex-shrink-0 bg-red-100 text-red-600 p-3 rounded-full">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636" /></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-red-600">Absent Today</h3>
+                                <p class="text-3xl font-semibold mt-1">${data.absent_today}</p>
+                            </div>
+                        </div>`;
                 } catch (error) {
                     dashboardStatsEl.innerHTML = `<p class="text-red-500 col-span-3">${error.message}</p>`;
                 }
             };
 
             const fetchTeachersForAdmin = async () => {
-                teachersListEl.innerHTML = `<div class="p-6 text-center text-gray-500">Loading teachers...</div>`;
+                teachersListEl.innerHTML = getSpinnerHtml('Loading teachers...');
                 try {
                     const response = await fetch(`${API_BASE_URL}/teachers`);
                     const teachers = await response.json();
@@ -557,7 +680,7 @@
             };
             
             const fetchTodaysAttendance = async () => {
-                presentListEl.innerHTML = `<div class="p-6 text-center text-gray-500">Loading report...</div>`;
+                presentListEl.innerHTML = getListSkeletonHtml(3); // Use skeleton
                 try {
                     const response = await fetch(`${API_BASE_URL}/attendance/today`);
                     const result = await response.json();
@@ -567,7 +690,6 @@
                         return;
                     }
 
-                    // UPDATED to show check-in and check-out times
                     presentListEl.innerHTML = result.data.map(r => `
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b last:border-b-0 gap-2">
                             <div>
@@ -595,7 +717,7 @@
             };
 
             const fetchAbsentTeachers = async () => {
-                absentListEl.innerHTML = `<div class="p-6 text-center text-gray-500">Loading report...</div>`;
+                absentListEl.innerHTML = getListSkeletonHtml(3); // Use skeleton
                 try {
                     const response = await fetch(`${API_BASE_URL}/attendance/absent`);
                     const result = await response.json();
@@ -610,26 +732,18 @@
                 }
             };
             
-            // *** NEW: Function to fetch and display the weekly report ***
             const fetchWeeklyReport = async () => {
-                weeklyReportListEl.innerHTML = `<div class="p-6 text-center text-gray-500">Loading weekly report...</div>`;
+                weeklyReportListEl.innerHTML = getSpinnerHtml('Loading weekly report...'); // Use spinner
                 try {
                     const response = await fetch(`${API_BASE_URL}/attendance/report/weekly`);
-                    
-                    // NEW: Robust error handling
-                    // Get the raw text from the response first
                     const rawText = await response.text();
                     
                     let result;
                     try {
-                        // Try to parse it as JSON
                         result = JSON.parse(rawText);
                     } catch (e) {
-                        // If parsing fails, it's not JSON (it's probably an HTML error page)
-                        // Show the raw HTML/text as the error. Added whitespace-pre-wrap for formatting.
                         throw new Error(`Server returned an invalid response (expected JSON): <br><pre class="whitespace-pre-wrap text-left p-4 bg-gray-100 rounded-md">${rawText.length > 500 ? rawText.substring(0, 500) + '...' : rawText}</pre>`);
                     }
-                    // END: Robust error handling
                     
                     if (!response.ok) {
                          throw new Error(result.error || 'Failed to fetch weekly report');
@@ -640,7 +754,6 @@
                         return;
                     }
 
-                    // Build responsive table
                     weeklyReportListEl.innerHTML = `
                         <table class="w-full text-sm text-left text-gray-500">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50">
@@ -655,7 +768,6 @@
                             <tbody>
                                 ${result.data.map(r => `
                                 <tr class="bg-white border-b hover:bg-gray-50">
-                                    <!-- *** MODIFIED: Changed r.teacher_name to r.name *** -->
                                     <td data-label="Teacher" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${r.name} <span class="block text-xs font-normal text-gray-500 sm:hidden">(${r.employee_code})</span></td>
                                     <td data-label="Date" class="px-6 py-4">${new Date(r.check_in_time).toLocaleDateString()}</td>
                                     <td data-label="Check-in" class="px-6 py-4 text-green-600">${new Date(r.check_in_time).toLocaleTimeString()}</td>
@@ -679,12 +791,9 @@
                             </tbody>
                         </table>`;
                 } catch (error) {
-                    // This will now display the helpful error message
                     weeklyReportListEl.innerHTML = `<div class="p-6 text-red-500">${error.message}</div>`;
                 }
             };
-            // *** END: New Function ***
-
 
             const deleteTeacher = async (teacherId) => {
                 try {
@@ -705,12 +814,11 @@
                 const attendanceListEl = document.getElementById('attendance-list');
                 const attendanceTeacherNameEl = document.getElementById('attendance-teacher-name');
 
-                attendanceListEl.innerHTML = `<div class="p-6 text-center text-gray-500">Loading attendance...</div>`;
+                attendanceListEl.innerHTML = getSpinnerHtml('Loading attendance...'); // Use spinner
                 attendanceTeacherNameEl.textContent = teacherName;
                 attendanceDetailsSection.classList.remove('hidden');
 
                 try {
-                    // Use a wide date range to get all records
                     const response = await fetch(`${API_BASE_URL}/attendance/report/teacher/${teacherId}?startDate=2000-01-01&endDate=2100-01-01`);
                     const result = await response.json();
 
@@ -723,7 +831,6 @@
                         return;
                     }
 
-                    // UPDATED to show check-in and check-out times
                     attendanceListEl.innerHTML = `
                         <table class="w-full text-sm text-left text-gray-500">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50">
@@ -752,7 +859,6 @@
                     const response = await fetch(`${API_BASE_URL}/attendance/status/${teacherId}`);
                     
                     if (!response.ok) {
-                        // Try to parse error JSON, but fall back if it's HTML
                         let errorMsg = `Error: ${response.status} ${response.statusText}`;
                         try {
                             const errData = await response.json();
@@ -777,8 +883,19 @@
                 }
             };
 
+            // NEW: Resets the teacher status UI
+            const resetTeacherStatusUI = () => {
+                teacherStatusMessage.classList.remove('bg-green-50', 'border-green-200', 'bg-blue-50', 'border-blue-200', 'border', 'p-6', 'rounded-lg', 'flex', 'items-center', 'gap-4');
+                teacherStatusHeading.classList.remove('text-green-800', 'text-blue-800', 'text-red-500');
+                teacherStatusDetails.classList.remove('text-green-700', 'text-blue-700');
+                teacherStatusHeading.innerHTML = ''; // Clear icon
+                teacherStatusDetails.innerHTML = '';
+            }
+
+            // UPDATED: Teacher UI function with new styles
             const updateTeacherUI = (status) => {
                 teacherLoading.classList.add('hidden');
+                resetTeacherStatusUI(); // Reset styles first
 
                 if (status.status === 'not_checked_in') { 
                     teacherPageTitle.textContent = 'Mark Check-In';
@@ -792,11 +909,15 @@
                     teacherStatusMessage.classList.remove('hidden');
                     attendanceForm.classList.remove('hidden');
                     
-                    teacherStatusHeading.textContent = 'You are checked in!';
-                    teacherStatusHeading.classList.remove('text-red-500');
+                    // Add new styles for "checked in"
+                    teacherStatusMessage.classList.add('bg-green-50', 'border', 'border-green-200', 'p-6', 'rounded-lg', 'flex', 'flex-col', 'sm:flex-row', 'items-center', 'gap-4');
+                    teacherStatusHeading.innerHTML = `
+                        <svg class="w-8 h-8 text-green-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
+                        <span class="text-xl font-semibold text-green-800">You are checked in!</span>`;
                     
                     const checkInTime = status.check_in_time;
                     teacherStatusDetails.textContent = `Checked in at: ${new Date(checkInTime).toLocaleTimeString()}`;
+                    teacherStatusDetails.classList.add('text-green-700', 'mt-1', 'sm:mt-0', 'sm:ml-auto');
                     
                     submitAttendanceBtn.textContent = 'Submit Check-Out';
                     submitAttendanceBtn.classList.replace('bg-green-600', 'bg-blue-600');
@@ -806,18 +927,20 @@
                     attendanceForm.classList.add('hidden');
                     teacherStatusMessage.classList.remove('hidden');
                     
-                    teacherStatusHeading.textContent = 'Session Complete!';
-                    teacherStatusHeading.classList.remove('text-red-500');
+                    // Add new styles for "completed"
+                    teacherStatusMessage.classList.add('bg-blue-50', 'border', 'border-blue-200', 'p-6', 'rounded-lg', 'flex', 'flex-col', 'sm:flex-row', 'items-center', 'gap-4');
+                    teacherStatusHeading.innerHTML = `
+                        <svg class="w-8 h-8 text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                        <span class="text-xl font-semibold text-blue-800">Session Complete!</span>`;
                     
                     const checkOutTime = status.check_out_time;
                     teacherStatusDetails.textContent = `You checked out at: ${new Date(checkOutTime).toLocaleTimeString()}`;
+                    teacherStatusDetails.classList.add('text-blue-700', 'mt-1', 'sm:mt-0', 'sm:ml-auto');
                 } else {
-                    // Handle unknown states
                     console.error("Unknown attendance status received:", status);
                     teacherPageTitle.textContent = 'Live Attendance';
                     attendanceForm.classList.add('hidden');
                     teacherStatusMessage.classList.remove('hidden');
-                    
                     teacherStatusHeading.textContent = 'Unable to load status';
                     teacherStatusHeading.classList.add('text-red-500');
                     teacherStatusDetails.textContent = 'Could not determine your attendance status. Please try logging out and back in.';
@@ -994,19 +1117,15 @@
                     showToast('Location not available. Please enable location services.', true); return;
                 }
                 
-                // NEW: Check if resized photos are ready
                 if (!resizedPhoto1 || !resizedPhoto2) {
                     showToast('Please select and wait for both photos to process.', true);
                     return;
                 }
                 
-                // NEW: Build FormData manually with resized files
                 const formData = new FormData();
                 formData.append('latitude', userLocation.latitude);
                 formData.append('longitude', userLocation.longitude);
                 formData.append('teacher_id', loggedInTeacher.id);
-                
-                // Append the resized files with standard names
                 formData.append('photo1', resizedPhoto1, 'photo1.jpg');
                 formData.append('photo2', resizedPhoto2, 'photo2.jpg');
                 
@@ -1019,14 +1138,11 @@
                     if (!response.ok) throw new Error(result.error || 'Failed to mark attendance');
                     
                     showToast('Attendance marked successfully!');
-                    
-                    // Re-fetch status to update UI (e.g., show check-out button)
                     fetchTeacherAttendanceStatus(loggedInTeacher.id);
 
                 } catch (error) {
                     showToast(error.message, true);
                 } finally {
-                    // Reset form and state
                     attendanceForm.reset();
                     photoPreview1.classList.add('hidden');
                     photoPreview2.classList.add('hidden');
@@ -1034,20 +1150,15 @@
                     photoPreview2.src = '';
                     resizedPhoto1 = null;
                     resizedPhoto2 = null;
-
                     submitAttendanceBtn.disabled = false;
-                    // The text content will be set by updateTeacherUI
                 }
             });
 
-            /**
-             * NEW: Handles file input, resizing, preview, and storage
-             */
+            // UPDATED: Photo handler with better user feedback
             async function handlePhotoInput(e, previewEl, storageKey) {
                 const file = e.target.files[0];
                 if (!file) return;
 
-                // Clear old preview and state
                 previewEl.src = "";
                 previewEl.classList.add('hidden');
                 if (storageKey === 'photo1') resizedPhoto1 = null;
@@ -1056,17 +1167,14 @@
                 showToast('Processing image... Please wait.', false);
 
                 try {
-                    // Resize image to max 1024px and 70% JPEG quality
                     const resizedFile = await resizeImage(file, 1024, 1024, 0.7);
 
-                    // Store the resized file
                     if (storageKey === 'photo1') {
                         resizedPhoto1 = resizedFile;
                     } else if (storageKey === 'photo2') {
                         resizedPhoto2 = resizedFile;
                     }
 
-                    // Show preview of the *resized* image
                     const previewUrl = URL.createObjectURL(resizedFile);
                     previewEl.src = previewUrl;
                     previewEl.classList.remove('hidden');
@@ -1076,11 +1184,10 @@
                 } catch (error) {
                     console.error('Image resize error:', error);
                     showToast('Error processing image. Please try another.', true);
-                    e.target.value = null; // Clear the file input
+                    e.target.value = null; 
                 }
             }
 
-            // NEW: Replace old setupPhotoPreview with new handlers
             photoInput1.addEventListener('change', (e) => handlePhotoInput(e, photoPreview1, 'photo1'));
             photoInput2.addEventListener('change', (e) => handlePhotoInput(e, photoPreview2, 'photo2'));
             
@@ -1090,7 +1197,7 @@
                 fetchTeachersForAdmin();
                 fetchTodaysAttendance();
                 fetchAbsentTeachers();
-                fetchWeeklyReport(); // *** ADDED: Call new function ***
+                fetchWeeklyReport();
             };
 
             const setupAuthenticatedTeacherView = (teacher) => {
@@ -1098,12 +1205,10 @@
                 showScreen(teacherScreen);
                 startLocationCapture();
                 
-                // Reset UI
                 teacherLoading.classList.remove('hidden');
                 attendanceForm.classList.add('hidden');
                 teacherStatusMessage.classList.add('hidden');
 
-                // Fetch current status to decide what to show
                 fetchTeacherAttendanceStatus(teacher.id);
             };
 
@@ -1126,4 +1231,3 @@
     </script>
 </body>
 </html>
-
