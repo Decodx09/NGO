@@ -3,6 +3,7 @@ const mysql = require('mysql2/promise');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -23,6 +24,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 
 const app = express();
+let currentAdminToken = null;
 const port = process.env.PORT || 3000;
 
 // --- MIDDLEWARE ---
@@ -52,7 +54,7 @@ const dbPool = mysql.createPool({
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const dir = 'uploads/';
-        if (!fs.existsSync(dir)){
+        if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
         cb(null, dir);
@@ -78,8 +80,8 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     const Δλ = (lon2 - lon1) * Math.PI / 180;
 
     const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        Math.cos(φ1) * Math.cos(φ2) *
+        Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distance in meters
 }
@@ -110,9 +112,9 @@ app.post('/login/teacher', async (req, res) => {
             return res.status(401).json({ success: false, error: 'Invalid employee code or password.' });
         }
         // MODIFIED: Return location data
-        const teacherData = { 
-            id: teacher.id, 
-            name: teacher.name, 
+        const teacherData = {
+            id: teacher.id,
+            name: teacher.name,
             employee_code: teacher.employee_code,
             latitude: teacher.latitude,
             longitude: teacher.longitude
@@ -133,9 +135,198 @@ app.post('/login/admin', (req, res) => {
         return res.status(400).json({ error: 'Username and password are required.' });
     }
     if (username === adminUser && password === adminPass) {
-        res.status(200).json({ success: true, message: 'Admin login successful.' });
+        currentAdminToken = crypto.randomBytes(32).toString('hex');
+        res.status(200).json({ success: true, message: 'Admin login successful.', token: currentAdminToken });
     } else {
         res.status(401).json({ success: false, error: 'Invalid credentials.' });
+    }
+});
+
+
+// --- ADMIN AUTH MIDDLEWARE ---
+const authenticateAdmin = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+
+    if (!token || token !== currentAdminToken) {
+        return res.status(401).json({ error: 'Unauthorized: Admin access required.' });
+    }
+    next();
+};
+
+// --- STUDENT MANAGEMENT ROUTES ---
+app.post('/students', authenticateAdmin, async (req, res) => {
+    try {
+        const { first_name, last_name, village_id, age } = req.body;
+        if (!first_name || !last_name || !village_id || !age) {
+            return res.status(400).json({ error: 'Missing required fields: first_name, last_name, village_id, age.' });
+        }
+
+        const sql = 'INSERT INTO students (first_name, last_name, village_id, age) VALUES (?, ?, ?, ?)';
+        const [result] = await dbPool.execute(sql, [first_name, last_name, village_id, age]);
+
+        res.status(201).json({
+            message: 'Student added successfully!',
+            studentId: result.insertId,
+            first_name, last_name, village_id, age
+        });
+    } catch (error) {
+        console.error('Error adding student:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+app.get('/students', authenticateAdmin, async (req, res) => {
+    try {
+        const { village_id } = req.query;
+        let sql = `
+            SELECT s.id, s.first_name, s.last_name, s.age, s.village_id, v.village_name 
+            FROM students s 
+            LEFT JOIN villages v ON s.village_id = v.id 
+        `;
+
+        const params = [];
+        if (village_id) {
+            sql += ' WHERE s.village_id = ?';
+            params.push(village_id);
+        }
+
+        sql += ' ORDER BY s.first_name, s.last_name';
+
+        const [students] = await dbPool.execute(sql, params);
+        res.status(200).json(students);
+    } catch (error) {
+        console.error('Error fetching students:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+app.get('/students/:id/attendance', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const sql = `
+            SELECT sa.date, sa.status, t.name as teacher_name
+            FROM student_attendance sa
+            LEFT JOIN teachers t ON sa.teacher_id = t.id
+            WHERE sa.student_id = ?
+            ORDER BY sa.date DESC
+        `;
+        const [attendance] = await dbPool.execute(sql, [id]);
+        res.status(200).json(attendance);
+    } catch (error) {
+        console.error('Error fetching student attendance history:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+app.put('/students/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { first_name, last_name, village_id, age } = req.body;
+
+        if (!first_name && !last_name && !village_id && !age) {
+            return res.status(400).json({ error: 'At least one field must be provided for update.' });
+        }
+
+        const fieldsToUpdate = [];
+        const values = [];
+        if (first_name) { fieldsToUpdate.push('first_name = ?'); values.push(first_name); }
+        if (last_name) { fieldsToUpdate.push('last_name = ?'); values.push(last_name); }
+        if (village_id) { fieldsToUpdate.push('village_id = ?'); values.push(village_id); }
+        if (age) { fieldsToUpdate.push('age = ?'); values.push(age); }
+        values.push(id);
+
+        const sql = `UPDATE students SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
+        const [result] = await dbPool.execute(sql, values);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Student not found.' });
+        }
+
+        res.status(200).json({ message: 'Student updated successfully.' });
+    } catch (error) {
+        console.error('Error updating student:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+app.delete('/students/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const sql = 'DELETE FROM students WHERE id = ?';
+        const [result] = await dbPool.execute(sql, [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Student not found.' });
+        }
+
+        res.status(200).json({ message: 'Student deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting student:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+// --- VILLAGE MANAGEMENT ROUTES ---
+app.post('/villages', authenticateAdmin, async (req, res) => {
+    try {
+        const { village_name, state, pincode } = req.body;
+        if (!village_name || !state || !pincode) {
+            return res.status(400).json({ error: 'Missing required fields: village_name, state, pincode.' });
+        }
+
+        const sql = 'INSERT INTO villages (village_name, state, pincode) VALUES (?, ?, ?)';
+        const [result] = await dbPool.execute(sql, [village_name, state, pincode]);
+
+        res.status(201).json({
+            message: 'Village added successfully!',
+            villageId: result.insertId,
+            village_name, state, pincode
+        });
+    } catch (error) {
+        console.error('Error adding village:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+app.get('/villages', authenticateAdmin, async (req, res) => {
+    try {
+        const [villages] = await dbPool.execute('SELECT * FROM villages ORDER BY village_name');
+        res.status(200).json(villages);
+    } catch (error) {
+        console.error('Error fetching villages:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+app.delete('/villages/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Check for dependencies (teachers or students)
+        // Note: This assumes foreign key constraints will throw an error, 
+        // but checking explicitly allows for a better error message.
+        const [teachers] = await dbPool.execute('SELECT id FROM teachers WHERE village_id = ?', [id]);
+        if (teachers.length > 0) {
+            return res.status(409).json({ error: 'Cannot delete village. There are teachers assigned to this village.' });
+        }
+
+        const [students] = await dbPool.execute('SELECT id FROM students WHERE village_id = ?', [id]);
+        if (students.length > 0) {
+            return res.status(409).json({ error: 'Cannot delete village. There are students assigned to this village.' });
+        }
+
+        const sql = 'DELETE FROM villages WHERE id = ?';
+        const [result] = await dbPool.execute(sql, [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Village not found.' });
+        }
+
+        res.status(200).json({ message: 'Village deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting village:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
     }
 });
 
@@ -144,14 +335,14 @@ app.post('/login/admin', (req, res) => {
 
 app.post('/teachers', async (req, res) => {
     try {
-        const { name, email, employee_code, password, latitude, longitude } = req.body; 
+        const { name, email, employee_code, password, latitude, longitude, village_id } = req.body;
 
         if (!name || !email || !employee_code || !password || latitude === undefined || longitude === undefined) {
             return res.status(400).json({ error: 'Missing required fields: name, email, employee_code, password, latitude, and longitude.' });
         }
 
-        const sql = 'INSERT INTO teachers (name, email, employee_code, password, latitude, longitude) VALUES (?, ?, ?, ?, ?, ?)';
-        const [result] = await dbPool.execute(sql, [name, email, employee_code, password, latitude, longitude]);
+        const sql = 'INSERT INTO teachers (name, email, employee_code, password, latitude, longitude, village_id) VALUES (?, ?, ?, ?, ?, ?, ?)';
+        const [result] = await dbPool.execute(sql, [name, email, employee_code, password, latitude, longitude, village_id || null]);
 
         res.status(201).json({
             message: 'Teacher added successfully!',
@@ -167,9 +358,24 @@ app.post('/teachers', async (req, res) => {
     }
 });
 
-app.get('/teachers', async (req, res) => {
+app.get('/teachers', authenticateAdmin, async (req, res) => {
     try {
-        const [teachers] = await dbPool.execute('SELECT id, name, email, employee_code, created_at, latitude, longitude FROM teachers ORDER BY name');
+        const { village_id } = req.query;
+        let sql = `
+            SELECT t.id, t.name, t.email, t.employee_code, t.village_id, v.village_name 
+            FROM teachers t
+            LEFT JOIN villages v ON t.village_id = v.id
+        `;
+
+        const params = [];
+        if (village_id) {
+            sql += ' WHERE t.village_id = ?';
+            params.push(village_id);
+        }
+
+        sql += ' ORDER BY t.name';
+
+        const [teachers] = await dbPool.execute(sql, params);
         res.status(200).json(teachers);
     } catch (error) {
         console.error('Error fetching teachers:', error);
@@ -177,10 +383,33 @@ app.get('/teachers', async (req, res) => {
     }
 });
 
+app.get('/teachers/:id/attendance', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const sql = `
+            SELECT check_in_time, check_out_time
+            FROM attendance
+            WHERE teacher_id = ?
+            ORDER BY check_in_time DESC
+        `;
+        const [attendance] = await dbPool.execute(sql, [id]);
+        res.status(200).json(attendance);
+    } catch (error) {
+        console.error('Error fetching teacher attendance history:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
 app.get('/teachers/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const [rows] = await dbPool.execute('SELECT id, name, email, employee_code, created_at, latitude, longitude FROM teachers WHERE id = ?', [id]);
+        const sql = `
+            SELECT t.id, t.name, t.email, t.employee_code, t.created_at, t.latitude, t.longitude, t.village_id, v.village_name 
+            FROM teachers t 
+            LEFT JOIN villages v ON t.village_id = v.id 
+            WHERE t.id = ?
+        `;
+        const [rows] = await dbPool.execute(sql, [id]);
         if (rows.length === 0) {
             return res.status(404).json({ error: 'Teacher not found.' });
         }
@@ -194,12 +423,12 @@ app.get('/teachers/:id', async (req, res) => {
 app.put('/teachers/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, employee_code, latitude, longitude } = req.body;
+        const { name, email, employee_code, latitude, longitude, village_id } = req.body;
 
-        if (!name && !email && !employee_code && latitude === undefined && longitude === undefined) {
+        if (!name && !email && !employee_code && latitude === undefined && longitude === undefined && village_id === undefined) {
             return res.status(400).json({ error: 'At least one field must be provided for update.' });
         }
-        
+
         const fieldsToUpdate = [];
         const values = [];
         if (name) { fieldsToUpdate.push('name = ?'); values.push(name); }
@@ -207,6 +436,7 @@ app.put('/teachers/:id', async (req, res) => {
         if (employee_code) { fieldsToUpdate.push('employee_code = ?'); values.push(employee_code); }
         if (latitude !== undefined) { fieldsToUpdate.push('latitude = ?'); values.push(latitude); }
         if (longitude !== undefined) { fieldsToUpdate.push('longitude = ?'); values.push(longitude); }
+        if (village_id !== undefined) { fieldsToUpdate.push('village_id = ?'); values.push(village_id); }
         values.push(id);
 
         const sql = `UPDATE teachers SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
@@ -254,7 +484,7 @@ const getAttendanceAction = async (req, res, next) => {
         if (!teacher_id) {
             return res.status(400).json({ error: 'teacher_id is missing.' });
         }
-        
+
         const todayDate = new Date().toISOString().slice(0, 10);
         const checkSql = 'SELECT id, check_in_time, check_out_time FROM attendance WHERE teacher_id = ? AND DATE(check_in_time) = ?';
         const [existing] = await dbPool.execute(checkSql, [teacher_id, todayDate]);
@@ -282,7 +512,7 @@ const getAttendanceAction = async (req, res, next) => {
 // MODIFIED: /attendance route now handles check-in AND check-out
 // FIXED: Swapped middleware order. 'upload' must run before 'getAttendanceAction' to populate req.body.
 app.post('/attendance', [upload.fields([{ name: 'photo1', maxCount: 1 }, { name: 'photo2', maxCount: 1 }]), getAttendanceAction], async (req, res) => {
-    
+
     const photos = req.files;
     const photo1 = photos.photo1 ? photos.photo1[0] : null;
     const photo2 = photos.photo2 ? photos.photo2[0] : null;
@@ -305,13 +535,13 @@ app.post('/attendance', [upload.fields([{ name: 'photo1', maxCount: 1 }, { name:
             cleanupFiles();
             return res.status(400).json({ error: 'Missing required fields: latitude, longitude, and two photos.' });
         }
-        
+
         // --- Handle case where session is already completed ---
         if (attendanceAction === 'completed') {
             cleanupFiles();
             return res.status(409).json({ error: 'Attendance session for today is already completed.' });
         }
-        
+
         // --- Location Validation ---
         const [teacherRows] = await dbPool.execute('SELECT latitude, longitude FROM teachers WHERE id = ?', [teacher_id]);
         if (teacherRows.length === 0) {
@@ -338,12 +568,12 @@ app.post('/attendance', [upload.fields([{ name: 'photo1', maxCount: 1 }, { name:
                 details: `Your distance is ${distance.toFixed(2)}m. Allowed range is ${ALLOWED_RADIUS_METERS}m.`
             });
         }
-        
+
         const photoPath1 = photo1.path;
         const photoPath2 = photo2.path;
 
         // --- Execute Check-in or Check-out ---
-        
+
         if (attendanceAction === 'check_in') {
             // This is a new session (INSERT)
             const sql = `
@@ -352,7 +582,7 @@ app.post('/attendance', [upload.fields([{ name: 'photo1', maxCount: 1 }, { name:
                 VALUES (?, NOW(), ?, ?, ?, ?)
             `;
             const [result] = await dbPool.execute(sql, [teacher_id, photoPath1, photoPath2, latitude, longitude]);
-            
+
             res.status(201).json({
                 message: 'Check-in successful!',
                 attendanceId: result.insertId,
@@ -380,7 +610,7 @@ app.post('/attendance', [upload.fields([{ name: 'photo1', maxCount: 1 }, { name:
     } catch (error) {
         cleanupFiles();
         if (error.code === 'ER_NO_REFERENCED_ROW_2') {
-             return res.status(404).json({ error: `Teacher with ID ${req.body.teacher_id} does not exist.` });
+            return res.status(404).json({ error: `Teacher with ID ${req.body.teacher_id} does not exist.` });
         }
         console.error('Error marking attendance:', error);
         res.status(500).json({ error: 'An internal server error occurred.' });
@@ -392,25 +622,25 @@ app.get('/attendance/status/:teacher_id', async (req, res) => {
     try {
         const { teacher_id } = req.params;
         const todayDate = new Date().toISOString().slice(0, 10);
-        
+
         const sql = 'SELECT id, check_in_time, check_out_time FROM attendance WHERE teacher_id = ? AND DATE(check_in_time) = ?';
         const [rows] = await dbPool.execute(sql, [teacher_id, todayDate]);
 
         if (rows.length === 0) {
             return res.status(200).json({ status: 'not_checked_in' });
         }
-        
+
         const session = rows[0];
         if (session.check_out_time === null) {
-            return res.status(200).json({ 
-                status: 'checked_in', 
-                check_in_time: session.check_in_time 
+            return res.status(200).json({
+                status: 'checked_in',
+                check_in_time: session.check_in_time
             });
         } else {
-            return res.status(200).json({ 
-                status: 'completed', 
-                check_in_time: session.check_in_time, 
-                check_out_time: session.check_out_time 
+            return res.status(200).json({
+                status: 'completed',
+                check_in_time: session.check_in_time,
+                check_out_time: session.check_out_time
             });
         }
     } catch (error) {
@@ -423,8 +653,9 @@ app.get('/attendance/status/:teacher_id', async (req, res) => {
 app.get('/attendance/today', async (req, res) => {
     try {
         const todayDate = new Date().toISOString().slice(0, 10);
-        // MODIFIED: Select new columns
-        const sql = `
+        const { village_id } = req.query;
+
+        let sql = `
             SELECT 
                 a.id as attendance_id, a.teacher_id, t.name as teacher_name, t.employee_code, 
                 a.check_in_time, a.check_out_time, 
@@ -432,9 +663,17 @@ app.get('/attendance/today', async (req, res) => {
                 a.check_out_photo_url1, a.check_out_photo_url2
             FROM attendance a JOIN teachers t ON a.teacher_id = t.id
             WHERE DATE(a.check_in_time) = ? 
-            ORDER BY a.check_in_time DESC
         `;
-        const [records] = await dbPool.execute(sql, [todayDate]);
+
+        const params = [todayDate];
+        if (village_id) {
+            sql += ` AND t.village_id = ?`;
+            params.push(village_id);
+        }
+
+        sql += ` ORDER BY a.check_in_time DESC`;
+
+        const [records] = await dbPool.execute(sql, params);
 
         // MODIFIED: Add all photo URLs
         const recordsWithPhotoUrl = records.map(record => ({
@@ -444,7 +683,7 @@ app.get('/attendance/today', async (req, res) => {
             check_out_photo_url1: record.check_out_photo_url1 ? `/uploads/${path.basename(record.check_out_photo_url1)}` : null,
             check_out_photo_url2: record.check_out_photo_url2 ? `/uploads/${path.basename(record.check_out_photo_url2)}` : null
         }));
-        
+
         res.status(200).json({ count: records.length, data: recordsWithPhotoUrl });
     } catch (error) {
         console.error('Error fetching today\'s attendance:', error);
@@ -455,15 +694,24 @@ app.get('/attendance/today', async (req, res) => {
 app.get('/attendance/absent', async (req, res) => {
     try {
         const todayDate = new Date().toISOString().slice(0, 10);
-        // MODIFIED: Check against 'check_in_time'
-        const sql = `
+        const { village_id } = req.query;
+
+        let sql = `
             SELECT t.id, t.name, t.employee_code, t.email
             FROM teachers t
             LEFT JOIN attendance a ON t.id = a.teacher_id AND DATE(a.check_in_time) = ?
             WHERE a.id IS NULL
-            ORDER BY t.name
         `;
-        const [absentTeachers] = await dbPool.execute(sql, [todayDate]);
+
+        const params = [todayDate];
+        if (village_id) {
+            sql += ` AND t.village_id = ?`;
+            params.push(village_id);
+        }
+
+        sql += ` ORDER BY t.name`;
+
+        const [absentTeachers] = await dbPool.execute(sql, params);
         res.status(200).json({ count: absentTeachers.length, data: absentTeachers });
     } catch (error) {
         console.error('Error fetching absent teachers:', error);
@@ -505,25 +753,35 @@ app.get('/attendance/report/weekly', async (req, res) => {
 
 app.get('/attendance/report/all', async (req, res) => {
     try {
-        const { startDate, endDate } = req.query;
+        const { startDate, endDate, village_id } = req.query;
         if (!startDate || !endDate) {
             return res.status(400).json({ error: 'Both startDate and endDate query parameters are required (YYYY-MM-DD).' });
         }
-        
-        // MODIFIED: Select new columns
-        const sql = `
+
+        let sql = `
             SELECT 
                 a.id, a.teacher_id, t.name, t.employee_code, 
                 a.check_in_time, a.check_out_time, 
                 a.check_in_photo_url1, a.check_in_photo_url2,
-                a.check_out_photo_url1, a.check_out_photo_url2
-            FROM attendance a JOIN teachers t ON a.teacher_id = t.id
+                a.check_out_photo_url1, a.check_out_photo_url2,
+                v.village_name
+            FROM attendance a 
+            JOIN teachers t ON a.teacher_id = t.id
+            LEFT JOIN villages v ON t.village_id = v.id
             WHERE DATE(a.check_in_time) BETWEEN ? AND ?
-            ORDER BY a.check_in_time DESC, t.name
         `;
-        const [records] = await dbPool.execute(sql, [startDate, endDate]);
 
-        // MODIFIED: Add all photo URLs
+        const params = [startDate, endDate];
+
+        if (village_id) {
+            sql += ' AND t.village_id = ?';
+            params.push(village_id);
+        }
+
+        sql += ' ORDER BY a.check_in_time DESC, t.name';
+
+        const [records] = await dbPool.execute(sql, params);
+
         const recordsWithPhotoUrl = records.map(record => ({
             ...record,
             check_in_photo_url1: record.check_in_photo_url1 ? `/uploads/${path.basename(record.check_in_photo_url1)}` : null,
@@ -536,6 +794,45 @@ app.get('/attendance/report/all', async (req, res) => {
 
     } catch (error) {
         console.error('Error fetching attendance report:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+app.get('/attendance/report/students', async (req, res) => {
+    try {
+        const { startDate, endDate, village_id } = req.query;
+        if (!startDate || !endDate) {
+            return res.status(400).json({ error: 'Both startDate and endDate query parameters are required (YYYY-MM-DD).' });
+        }
+
+        let sql = `
+            SELECT 
+                sa.id, sa.date, sa.status, 
+                s.first_name, s.last_name, s.age,
+                v.village_name,
+                t.name as marked_by_teacher
+            FROM student_attendance sa
+            JOIN students s ON sa.student_id = s.id
+            LEFT JOIN villages v ON s.village_id = v.id
+            LEFT JOIN teachers t ON sa.teacher_id = t.id
+            WHERE sa.date BETWEEN ? AND ?
+        `;
+
+        const params = [startDate, endDate];
+
+        if (village_id) {
+            sql += ' AND s.village_id = ?';
+            params.push(village_id);
+        }
+
+        sql += ' ORDER BY sa.date DESC, s.first_name';
+
+        const [records] = await dbPool.execute(sql, params);
+
+        res.status(200).json({ count: records.length, data: records });
+
+    } catch (error) {
+        console.error('Error fetching student attendance report:', error);
         res.status(500).json({ error: 'An internal server error occurred.' });
     }
 });
@@ -571,7 +868,7 @@ app.get('/attendance/report/teacher/:teacher_id', async (req, res) => {
             check_out_photo_url1: record.check_out_photo_url1 ? `/uploads/${path.basename(record.check_out_photo_url1)}` : null,
             check_out_photo_url2: record.check_out_photo_url2 ? `/uploads/${path.basename(record.check_out_photo_url2)}` : null
         }));
-        
+
         res.status(200).json({ count: records.length, data: recordsWithPhotoUrl });
 
     } catch (error) {
@@ -604,11 +901,11 @@ app.get('/attendance/:teacher_id', async (req, res) => {
         } else if (filter === 'month') {
             sql += ' AND MONTH(check_in_time) = MONTH(NOW()) AND YEAR(check_in_time) = YEAR(NOW())';
         }
-        
+
         sql += ' ORDER BY check_in_time DESC';
 
         const [records] = await dbPool.execute(sql, params);
-        
+
         if (records.length === 0) {
             return res.status(200).json([]); // Return empty array for consistency
         }
@@ -623,20 +920,162 @@ app.get('/attendance/:teacher_id', async (req, res) => {
         }));
 
         res.status(200).json(recordsWithPhotoUrl);
-        
+
     } catch (error) {
         console.error('Error fetching teacher attendance report:', error);
         res.status(500).json({ error: 'An internal server error occurred.' });
     }
 });
 
+// NEW: Get students for a teacher (based on same village)
+app.get('/teacher/:teacher_id/students', async (req, res) => {
+    try {
+        const { teacher_id } = req.params;
+
+        // 1. Get teacher's village_id
+        const [teacherRows] = await dbPool.execute('SELECT village_id FROM teachers WHERE id = ?', [teacher_id]);
+
+        if (teacherRows.length === 0) {
+            return res.status(404).json({ error: 'Teacher not found.' });
+        }
+
+        const village_id = teacherRows[0].village_id;
+
+        if (!village_id) {
+            return res.status(200).json([]); // Teacher has no village assigned, so no students
+        }
+
+        // 2. Get students in that village
+        const sql = `
+            SELECT s.id, s.first_name, s.last_name, s.age, v.village_name
+            FROM students s
+            JOIN villages v ON s.village_id = v.id
+            WHERE s.village_id = ?
+            ORDER BY s.first_name, s.last_name
+        `;
+        const [students] = await dbPool.execute(sql, [village_id]);
+
+        res.status(200).json(students);
+
+    } catch (error) {
+        console.error('Error fetching teacher students:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+// --- STUDENT ATTENDANCE ROUTES ---
+
+app.post('/attendance/students', async (req, res) => {
+    try {
+        const { teacher_id, date, attendanceData } = req.body;
+        // attendanceData = [{ student_id: 1, status: 'present' }, ...]
+
+        if (!teacher_id || !date || !Array.isArray(attendanceData)) {
+            return res.status(400).json({ error: 'Invalid input data.' });
+        }
+
+        const connection = await dbPool.getConnection();
+        try {
+            await connection.beginTransaction();
+
+            for (const record of attendanceData) {
+                const { student_id, status } = record;
+                const sql = `
+                    INSERT INTO student_attendance (student_id, teacher_id, date, status)
+                    VALUES (?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE status = VALUES(status), teacher_id = VALUES(teacher_id)
+                `;
+                await connection.execute(sql, [student_id, teacher_id, date, status]);
+            }
+
+            await connection.commit();
+            res.status(200).json({ message: 'Student attendance saved successfully.' });
+        } catch (err) {
+            await connection.rollback();
+            throw err;
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        console.error('Error saving student attendance:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+app.get('/attendance/students/:teacher_id/:date', async (req, res) => {
+    try {
+        const { teacher_id, date } = req.params;
+
+        // First get village_id of teacher
+        const [teacherRows] = await dbPool.execute('SELECT village_id FROM teachers WHERE id = ?', [teacher_id]);
+        if (teacherRows.length === 0) return res.status(404).json({ error: 'Teacher not found' });
+        const village_id = teacherRows[0].village_id;
+
+        if (!village_id) return res.status(200).json([]);
+
+        const sql = `
+            SELECT s.id as student_id, sa.status
+            FROM students s
+            LEFT JOIN student_attendance sa ON s.id = sa.student_id AND sa.date = ?
+            WHERE s.village_id = ?
+        `;
+        const [rows] = await dbPool.execute(sql, [date, village_id]);
+        res.status(200).json(rows);
+    } catch (error) {
+        console.error('Error fetching student attendance:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+// NEW: Admin Student Attendance Report
+app.get('/reports/students', authenticateAdmin, async (req, res) => {
+    try {
+        const { date, village_id } = req.query;
+
+        let sql = `
+            SELECT 
+                s.first_name, 
+                s.last_name, 
+                v.village_name, 
+                sa.date, 
+                sa.status,
+                t.name as teacher_name
+            FROM students s
+            JOIN villages v ON s.village_id = v.id
+            LEFT JOIN student_attendance sa ON s.id = sa.student_id
+            LEFT JOIN teachers t ON sa.teacher_id = t.id
+            WHERE 1=1
+        `;
+
+        const params = [];
+
+        if (date) {
+            sql += ' AND sa.date = ?';
+            params.push(date);
+        }
+
+        if (village_id) {
+            sql += ' AND s.village_id = ?';
+            params.push(village_id);
+        }
+
+        sql += ' AND sa.id IS NOT NULL ORDER BY sa.date DESC, v.village_name, s.first_name';
+
+        const [rows] = await dbPool.execute(sql, params);
+        res.status(200).json(rows);
+
+    } catch (error) {
+        console.error('Error fetching student attendance report:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
 
 // === DASHBOARD ROUTES ===
 
 app.get('/dashboard/stats', async (req, res) => {
     try {
         const todayDate = new Date().toISOString().slice(0, 10);
-        
+
         const [totalResult] = await dbPool.execute('SELECT COUNT(id) as total_teachers FROM teachers');
         const totalTeachers = totalResult[0].total_teachers;
 
@@ -660,6 +1099,85 @@ app.get('/dashboard/stats', async (req, res) => {
 
 
 // ## 5. START SERVER ##
+
+// --- function to create villages table ---
+const createVillagesTable = async () => {
+    const sql = `
+        CREATE TABLE IF NOT EXISTS villages (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            village_name VARCHAR(255) NOT NULL,
+            state VARCHAR(255) NOT NULL,
+            pincode VARCHAR(20) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `;
+    try {
+        await dbPool.execute(sql);
+        console.log('Villages table checked/created successfully.');
+    } catch (error) {
+        console.error('Error creating villages table:', error);
+    }
+};
+
+// --- function to update teachers table schema ---
+const updateTeachersTableSchema = async () => {
+    try {
+        // Check if village_id column exists
+        const [columns] = await dbPool.execute("SHOW COLUMNS FROM teachers LIKE 'village_id'");
+        if (columns.length === 0) {
+            console.log('Adding village_id column to teachers table...');
+            await dbPool.execute("ALTER TABLE teachers ADD COLUMN village_id INT DEFAULT NULL");
+            await dbPool.execute("ALTER TABLE teachers ADD CONSTRAINT fk_village FOREIGN KEY (village_id) REFERENCES villages(id) ON DELETE SET NULL");
+            console.log('village_id column added successfully.');
+        }
+    } catch (error) {
+        console.error('Error updating teachers table schema:', error);
+    }
+};
+
+// --- function to create students table ---
+const createStudentsTable = async () => {
+    const sql = `
+        CREATE TABLE IF NOT EXISTS students (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            first_name VARCHAR(255) NOT NULL,
+            last_name VARCHAR(255) NOT NULL,
+            village_id INT,
+            age INT NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (village_id) REFERENCES villages(id) ON DELETE SET NULL
+        )
+    `;
+    try {
+        await dbPool.execute(sql);
+        console.log('Students table checked/created successfully.');
+    } catch (error) {
+        console.error('Error creating students table:', error);
+    }
+};
+
+// --- function to create student_attendance table ---
+const createStudentAttendanceTable = async () => {
+    const sql = `
+        CREATE TABLE IF NOT EXISTS student_attendance (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            student_id INT NOT NULL,
+            teacher_id INT NOT NULL,
+            date DATE NOT NULL,
+            status ENUM('present', 'absent') NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_student_date (student_id, date),
+            FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
+            FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE
+        )
+    `;
+    try {
+        await dbPool.execute(sql);
+        console.log('Student attendance table checked/created successfully.');
+    } catch (error) {
+        console.error('Error creating student attendance table:', error);
+    }
+};
 
 // --- function to check database connection ---
 const checkDatabaseConnection = async () => {
@@ -687,8 +1205,12 @@ const checkDatabaseConnection = async () => {
 // --- Modified server start logic ---
 const startServer = async () => {
     const isDbConnected = await checkDatabaseConnection();
-    
+
     if (isDbConnected) {
+        await createVillagesTable();
+        await updateTeachersTableSchema();
+        await createStudentsTable();
+        await createStudentAttendanceTable();
         app.listen(port, () => {
             console.log(`Server is running on http://localhost:${port}`);
         });
