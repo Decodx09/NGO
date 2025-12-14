@@ -36,6 +36,18 @@
             background: #94a3b8;
         }
 
+        /* Hide number input arrows */
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield;
+            appearance: textfield;
+        }
+
         /* Shadcn-like Tabs */
         .tab-link {
             transition: all 0.2s ease;
@@ -204,129 +216,124 @@
 <body class="bg-slate-50 text-slate-900 antialiased">
 
     <!-- ===== Upgraded Login Screen ===== -->
+    <!-- ===== Upgraded Login Screen (Twitter/Reddit Style) ===== -->
     <div id="login-screen"
-        class="screen min-h-screen flex flex-col items-center justify-center p-4 bg-gray-50 relative overflow-hidden">
+        class="screen min-h-screen flex flex-col items-center justify-center p-4 bg-white relative overflow-hidden">
 
-        <div class="w-full max-w-sm relative z-10">
-            <!-- Card Wrapper -->
-            <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-xl border border-gray-100 transition-all duration-300">
+        <div class="w-full max-w-[350px] relative z-10">
+            <!-- Logo -->
+            <div class="flex justify-center mb-8">
+                <div class="w-12 h-12 bg-black text-white rounded-full flex items-center justify-center shadow-sm">
+                    <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                        stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M9 12.75 11.25 15 15 9.75M21 21h-2.25m-2.25H5.25A2.25 2.25 0 0 1 3 18.75V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25v13.5A2.25 2.25 0 0 1 18.75 21Z" />
+                    </svg>
+                </div>
+            </div>
 
-                <!-- Logo & Title -->
-                <div class="text-center mb-8">
-                    <div
-                        class="inline-flex items-center justify-center w-16 h-16 bg-indigo-600 text-white rounded-2xl shadow-lg mb-4 transform rotate-3 hover:rotate-6 transition-transform">
-                        <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+            <div class="text-center mb-10">
+                <h1 class="text-3xl font-bold text-gray-900 tracking-tight mb-2">Sign in to Attendance</h1>
+                <p class="text-gray-500 text-sm">Welcome back</p>
+            </div>
+
+            <!-- Card Wrapper (Minimalist) -->
+            <div class="">
+
+                <div id="role-selection" class="space-y-4">
+                    <button id="show-admin-login-btn"
+                        class="w-full bg-white border border-gray-300 text-gray-900 py-2.5 rounded-full font-bold hover:bg-gray-50 transition-all flex items-center justify-center gap-2 text-sm">
+                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M9 12.75 11.25 15 15 9.75M21 21h-2.25m-2.25H5.25A2.25 2.25 0 0 1 3 18.75V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25v13.5A2.25 2.25 0 0 1 18.75 21Z" />
+                                d="M10.5 6h9.75M10.5 12h9.75M10.5 18h9.75M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 6.75h.007v.008H4.125v-.008Zm0 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 6.75h.007v.008H4.125v-.008Zm0 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                         </svg>
-                    </div>
-                    <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Attendance System</h1>
-                    <p class="text-gray-500 mt-2 text-sm">Secure access for staff & admins</p>
-                </div>
-
-                <div id="role-selection" class="space-y-3">
-                    <button id="show-admin-login-btn"
-                        class="group w-full bg-white border border-gray-200 text-gray-800 py-3 rounded-xl font-semibold hover:border-indigo-500 hover:ring-1 hover:ring-indigo-500 hover:text-indigo-600 transition-all shadow-sm hover:shadow-md flex items-center justify-between px-5">
-                        <span class="flex items-center gap-3">
-                            <span
-                                class="p-2 bg-indigo-50 text-indigo-600 rounded-lg group-hover:bg-indigo-100 transition-colors">
-                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M10.5 6h9.75M10.5 12h9.75M10.5 18h9.75M3.75 6.75h.007v.008H3.75V6.75Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 6.75h.007v.008H4.125v-.008Zm0 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 6.75h.007v.008H4.125v-.008Zm0 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-                                </svg>
-                            </span>
-                            Admin Login
-                        </span>
-                        <svg class="w-5 h-5 text-gray-400 group-hover:text-indigo-500 group-hover:translate-x-1 transition-all"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                        </svg>
+                        Continue as Admin
                     </button>
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-gray-200"></div>
+                        <span class="flex-shrink-0 mx-4 text-gray-400 text-xs">or</span>
+                        <div class="flex-grow border-t border-gray-200"></div>
+                    </div>
                     <button id="show-teacher-login-btn"
-                        class="group w-full bg-white border border-gray-200 text-gray-800 py-3 rounded-xl font-semibold hover:border-green-500 hover:ring-1 hover:ring-green-500 hover:text-green-600 transition-all shadow-sm hover:shadow-md flex items-center justify-between px-5">
-                        <span class="flex items-center gap-3">
-                            <span
-                                class="p-2 bg-green-50 text-green-600 rounded-lg group-hover:bg-green-100 transition-colors">
-                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-                                </svg>
-                            </span>
-                            Teacher Login
-                        </span>
-                        <svg class="w-5 h-5 text-gray-400 group-hover:text-green-500 group-hover:translate-x-1 transition-all"
-                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                        class="w-full bg-black text-white border border-transparent py-2.5 rounded-full font-bold hover:bg-gray-800 transition-all flex items-center justify-center gap-2 text-sm shadow-sm">
+                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                            stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                         </svg>
+                        Sign in as Teacher
                     </button>
                 </div>
 
                 <form id="admin-login-form" class="hidden text-left animate-fadeIn">
-                    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Admin Access</h2>
-                    <div class="space-y-5">
-                        <div>
-                            <label for="admin-username"
-                                class="block text-sm font-medium text-gray-700 mb-1.5">Username</label>
+                    <div class="mb-8">
+                        <button type="button"
+                            class="back-to-roles-btn text-gray-900 hover:bg-gray-100 p-2 rounded-full transition -ml-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"></path>
+                            </svg>
+                        </button>
+                        <h2 class="text-2xl font-bold mt-4 text-gray-900">Enter Admin Details</h2>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="relative group">
                             <input type="text" id="admin-username" name="username"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                                placeholder="Enter username" required>
+                                class="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all placeholder-transparent bg-transparent"
+                                placeholder="Username" required>
+                            <label for="admin-username"
+                                class="absolute left-3 top-1 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:top-1 peer-focus:text-xs peer-focus:text-black">Username</label>
                         </div>
-                        <div>
-                            <label for="admin-password"
-                                class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                        <div class="relative group">
                             <input type="password" id="admin-password" name="password"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                                placeholder="Enter password" required>
+                                class="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all placeholder-transparent bg-transparent"
+                                placeholder="Password" required>
+                            <label for="admin-password"
+                                class="absolute left-3 top-1 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:top-1 peer-focus:text-xs peer-focus:text-black">Password</label>
                         </div>
-                        <div class="pt-2 space-y-3">
-                            <button type="submit"
-                                class="w-full bg-gradient-to-r from-indigo-600 to-indigo-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all duration-200">
-                                Login
-                            </button>
-                            <button type="button"
-                                class="back-to-roles-btn w-full bg-transparent text-gray-500 py-2 rounded-xl font-medium hover:text-gray-800 transition">
-                                ← Back to selection
-                            </button>
-                        </div>
+                        <button type="submit"
+                            class="w-full bg-black text-white py-3 rounded-full font-bold hover:bg-gray-800 transition-all shadow-sm mt-6 text-sm">
+                            Next
+                        </button>
                     </div>
                 </form>
 
                 <form id="teacher-login-form" class="hidden text-left animate-fadeIn">
-                    <h2 class="text-2xl font-bold mb-6 text-center text-gray-800">Teacher Access</h2>
-                    <div class="space-y-5">
-                        <div>
-                            <label for="employee-code-login"
-                                class="block text-sm font-medium text-gray-700 mb-1.5">Employee Code</label>
-                            <input type="text" id="employee-code-login" name="employee_code"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none"
-                                placeholder="e.g. EMP123" required>
+                    <div class="mb-8">
+                        <button type="button"
+                            class="back-to-roles-btn text-gray-900 hover:bg-gray-100 p-2 rounded-full transition -ml-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18"></path>
+                            </svg>
+                        </button>
+                        <h2 class="text-2xl font-bold mt-4 text-gray-900">Teacher Login</h2>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="relative group">
+                            <input type="text" id="teacher-id-login" name="teacher_id"
+                                class="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all placeholder-transparent bg-transparent"
+                                placeholder="Teacher ID" required>
+                            <label for="teacher-id-login"
+                                class="absolute left-3 top-1 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:top-1 peer-focus:text-xs peer-focus:text-black">Teacher
+                                ID</label>
                         </div>
-                        <div>
-                            <label for="teacher-password"
-                                class="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                        <div class="relative group">
                             <input type="password" id="teacher-password" name="password"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all outline-none"
-                                placeholder="Enter password" required>
+                                class="peer w-full px-3 pt-5 pb-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-black focus:border-transparent outline-none transition-all placeholder-transparent bg-transparent"
+                                placeholder="Password" required>
+                            <label for="teacher-password"
+                                class="absolute left-3 top-1 text-xs text-gray-500 transition-all peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400 peer-placeholder-shown:top-3.5 peer-focus:top-1 peer-focus:text-xs peer-focus:text-black">Password</label>
                         </div>
-                        <div class="pt-2 space-y-3">
-                            <button type="submit"
-                                class="w-full bg-gradient-to-r from-green-600 to-green-500 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-green-500/30 hover:shadow-green-500/40 hover:-translate-y-0.5 transition-all duration-200">
-                                Login & Proceed
-                            </button>
-                            <button type="button"
-                                class="back-to-roles-btn w-full bg-transparent text-gray-500 py-2 rounded-xl font-medium hover:text-gray-800 transition">
-                                ← Back to selection
-                            </button>
-                        </div>
+                        <button type="submit"
+                            class="w-full bg-black text-white py-3 rounded-full font-bold hover:bg-gray-800 transition-all shadow-sm mt-6 text-sm">
+                            Log in
+                        </button>
                     </div>
                 </form>
             </div>
-            <p class="text-center text-white/80 mt-8 text-sm font-medium">© 2025 Attendance System</p>
         </div>
     </div>
     <!-- ===== End Upgraded Login Screen ===== -->
@@ -334,7 +341,8 @@
     <!-- ===== Upgraded Admin Screen ===== -->
     <!-- ===== Upgraded Admin Screen (Shadcn Style) ===== -->
     <div id="admin-screen" class="screen container mx-auto p-4 max-w-5xl">
-        <header class="mb-6 flex items-center justify-between">
+        <header
+            class="mb-6 flex items-center justify-between bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
             <div class="flex items-center gap-3">
                 <div class="bg-slate-900 text-white p-2 rounded-lg">
                     <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
@@ -348,38 +356,98 @@
                     <p class="text-xs text-slate-500 font-medium">Dashboard</p>
                 </div>
             </div>
-            <button id="admin-logout-btn"
-                class="text-xs font-medium text-slate-500 hover:text-red-600 hover:bg-red-50 px-3 py-2 rounded-md transition-colors flex items-center gap-2">
-                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
-                </svg>
-                Log Out
-            </button>
-        </header>
 
-        <nav class="mb-6">
-            <ul class="grid grid-cols-2 md:grid-cols-5 bg-slate-100 p-1 rounded-lg gap-1">
-                <li><a href="#" id="tab-dashboard"
-                        class="tab-link active block py-2 px-4 text-center whitespace-nowrap text-sm">Dashboard</a></li>
-                <li><a href="#" id="tab-villages"
-                        class="tab-link block py-2 px-4 text-center whitespace-nowrap text-sm">Villages</a></li>
-                <li><a href="#" id="tab-teachers"
-                        class="tab-link block py-2 px-4 text-center whitespace-nowrap text-sm">Teachers</a></li>
-                <li><a href="#" id="tab-students"
-                        class="tab-link block py-2 px-4 text-center whitespace-nowrap text-sm">Students</a></li>
-                <li class="col-span-2 md:col-span-1"><a href="#" id="tab-reports"
-                        class="tab-link block py-2 px-4 text-center whitespace-nowrap text-sm">Reports</a></li>
-            </ul>
-        </nav>
+            <div class="flex items-center gap-4">
+                <!-- Burger Menu Button (Mobile & Desktop) -->
+                <div class="relative">
+                    <button id="burger-menu-btn"
+                        class="p-2 rounded-lg hover:bg-slate-100 transition-colors focus:outline-none">
+                        <svg class="w-6 h-6 text-slate-700" xmlns="http://www.w3.org/2000/svg" fill="none"
+                            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                        </svg>
+                    </button>
+                    <!-- Dropdown Menu -->
+                    <div id="burger-menu-dropdown"
+                        class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 hidden z-50 overflow-hidden origin-top-right transition-all">
+                        <nav class="flex flex-col py-1">
+                            <a href="#" id="tab-dashboard"
+                                class="tab-link active px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                                    </path>
+                                </svg>
+                                Dashboard
+                            </a>
+                            <a href="#" id="tab-villages"
+                                class="tab-link px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z">
+                                    </path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                </svg>
+                                Villages
+                            </a>
+                            <a href="#" id="tab-teachers"
+                                class="tab-link px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                                    </path>
+                                </svg>
+                                Teachers
+                            </a>
+                            <a href="#" id="tab-students"
+                                class="tab-link px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z">
+                                    </path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 14l9-5-9-5-9 5 9 5z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z">
+                                    </path>
+                                </svg>
+                                Students
+                            </a>
+                            <a href="#" id="tab-reports"
+                                class="tab-link px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                                Reports
+                            </a>
+                            <div class="border-t border-slate-100 my-1"></div>
+                            <button id="admin-logout-btn"
+                                class="w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-3">
+                                <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
+                                </svg>
+                                Log Out
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </header>
 
         <main>
             <section id="page-dashboard" class="page page-active">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <div>
                         <h2 class="text-xl font-bold text-slate-900 tracking-tight">Overview</h2>
-                        <p class="text-slate-500 text-sm">Real-time stats</p>
+                        <p class="text-slate-500 text-sm">Latest Stats Captured Today</p>
                     </div>
                     <div class="relative w-full sm:w-auto">
                         <select id="dashboard-village-filter"
@@ -410,7 +478,7 @@
                         <div class="flex flex-col sm:flex-row gap-3">
                             <div class="relative">
                                 <select id="teacher-roster-filter"
-                                    class="appearance-none pl-4 pr-10 py-2.5 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition-all hover:border-indigo-400 cursor-pointer">
+                                    class="appearance-none pl-4 pr-10 py-2.5 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-slate-800 focus:border-slate-800 shadow-sm transition-all hover:border-slate-600 cursor-pointer">
                                     <option value="">All Villages</option>
                                     <!-- Options populated dynamically -->
                                 </select>
@@ -423,7 +491,7 @@
                                 </div>
                             </div>
                             <button id="add-teacher-btn"
-                                class="w-full sm:w-auto bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30 hover:-translate-y-0.5">
+                                class="w-full sm:w-auto bg-slate-900 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-black transition flex items-center justify-center gap-2 shadow-lg shadow-slate-800/30 hover:-translate-y-0.5">
                                 <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke-width="2" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -440,7 +508,7 @@
                     </div>
                     <div id="attendance-details-section" class="mt-8 hidden animate-fadeIn">
                         <h3 class="text-xl font-bold mb-4 text-gray-800">Attendance History for <span
-                                id="attendance-teacher-name" class="text-indigo-600"></span></h3>
+                                id="attendance-teacher-name" class="text-slate-900"></span></h3>
                         <div id="attendance-list"
                             class="responsive-table border border-gray-100 rounded-xl overflow-hidden shadow-sm"></div>
                     </div>
@@ -455,7 +523,7 @@
                             <p class="text-gray-500 text-sm mt-1">Configure locations and zones</p>
                         </div>
                         <button id="add-village-btn"
-                            class="w-full sm:w-auto bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30 hover:-translate-y-0.5">
+                            class="w-full sm:w-auto bg-slate-900 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-black transition flex items-center justify-center gap-2 shadow-lg shadow-slate-800/30 hover:-translate-y-0.5">
                             <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                 stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
@@ -483,7 +551,7 @@
                         <div class="flex flex-col sm:flex-row gap-3">
                             <div class="relative">
                                 <select id="student-roster-filter"
-                                    class="appearance-none pl-4 pr-10 py-2.5 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition-all hover:border-indigo-400 cursor-pointer">
+                                    class="appearance-none pl-4 pr-10 py-2.5 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-slate-800 focus:border-slate-800 shadow-sm transition-all hover:border-slate-600 cursor-pointer">
                                     <option value="">All Villages</option>
                                     <!-- Options populated dynamically -->
                                 </select>
@@ -495,14 +563,46 @@
                                     </svg>
                                 </div>
                             </div>
-                            <button id="add-student-btn"
-                                class="w-full sm:w-auto bg-indigo-600 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-indigo-700 transition flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/30 hover:-translate-y-0.5">
-                                <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                    stroke-width="2" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            <button id="download-template-btn"
+                                class="w-full sm:w-auto bg-white text-slate-900 border border-slate-300 px-5 py-2.5 rounded-xl font-semibold hover:bg-slate-100 transition flex items-center justify-center gap-2 shadow-sm">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M12 12.75l-3-3m0 0l3-3m-3 3h7.5M12 12.75V3" />
                                 </svg>
-                                Add Student
+                                Template
                             </button>
+                            <div class="relative group">
+                                <button id="add-student-options-btn"
+                                    class="w-full sm:w-auto bg-slate-900 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-black transition flex items-center justify-center gap-2 shadow-lg shadow-slate-800/30 hover:-translate-y-0.5">
+                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M12 4.5v15m7.5-7.5h-15" />
+                                    </svg>
+                                    Add Student
+                                </button>
+                                <!-- Dropdown Menu -->
+                                <div
+                                    class="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-gray-100 hidden group-hover:block z-20 overflow-hidden">
+                                    <button id="add-student-manual-btn"
+                                        class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-slate-100 hover:text-black transition-colors flex items-center gap-2">
+                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                                        </svg>
+                                        Manual Entry
+                                    </button>
+                                    <button id="add-student-csv-btn"
+                                        class="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-slate-100 hover:text-black transition-colors flex items-center gap-2 border-t border-gray-50">
+                                        <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6" />
+                                        </svg>
+                                        Upload CSV
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -529,7 +629,7 @@
                             <!-- Report Type Toggle -->
                             <div class="bg-white p-1 rounded-xl flex shadow-sm border border-gray-100">
                                 <button id="report-type-teacher"
-                                    class="px-4 py-2 rounded-lg text-sm font-bold transition-all bg-indigo-50 text-indigo-600 shadow-sm ring-1 ring-indigo-100">Teachers</button>
+                                    class="px-4 py-2 rounded-lg text-sm font-bold transition-all bg-slate-100 text-slate-900 shadow-sm ring-1 ring-slate-200">Teachers</button>
                                 <button id="report-type-student"
                                     class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all">Students</button>
                             </div>
@@ -546,7 +646,7 @@
 
                             <!-- Village Filter -->
                             <select id="report-village-filter"
-                                class="px-4 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer hover:border-indigo-300 transition-colors">
+                                class="px-4 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-slate-800 outline-none cursor-pointer hover:border-indigo-300 transition-colors">
                                 <option value="">All Villages</option>
                                 <!-- Options populated dynamically -->
                             </select>
@@ -577,7 +677,7 @@
             <header
                 class="w-full py-3 px-4 bg-white rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center mb-4 sticky top-2 z-10">
                 <div class="flex items-center gap-3">
-                    <div class="bg-indigo-50 text-indigo-600 p-2 rounded-lg">
+                    <div class="bg-slate-100 text-slate-900 p-2 rounded-lg">
                         <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                             stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -629,7 +729,7 @@
                                 class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wide">Live Photo
                                 1</label>
                             <div
-                                class="relative border-2 border-dashed border-gray-300 rounded-xl p-4 transition-all hover:border-indigo-500 hover:bg-indigo-50/30 text-center cursor-pointer h-32 flex flex-col justify-center items-center">
+                                class="relative border-2 border-dashed border-gray-300 rounded-xl p-4 transition-all hover:border-slate-800 hover:bg-slate-100/30 text-center cursor-pointer h-32 flex flex-col justify-center items-center">
                                 <input type="file" id="photo1" name="photo1" accept="image/*" capture="environment"
                                     class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required>
                                 <div class="space-y-2">
@@ -640,7 +740,7 @@
                                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
                                     <div class="text-sm text-gray-600">
-                                        <span class="font-medium text-indigo-600">Click to capture</span>
+                                        <span class="font-medium text-slate-900">Click to capture</span>
                                     </div>
                                 </div>
                             </div>
@@ -652,7 +752,7 @@
                                 class="block text-xs font-bold text-gray-600 mb-2 uppercase tracking-wide">Live Photo
                                 2</label>
                             <div
-                                class="relative border-2 border-dashed border-gray-300 rounded-xl p-4 transition-all hover:border-indigo-500 hover:bg-indigo-50/30 text-center cursor-pointer h-32 flex flex-col justify-center items-center">
+                                class="relative border-2 border-dashed border-gray-300 rounded-xl p-4 transition-all hover:border-slate-800 hover:bg-slate-100/30 text-center cursor-pointer h-32 flex flex-col justify-center items-center">
                                 <input type="file" id="photo2" name="photo2" accept="image/*" capture="environment"
                                     class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" required>
                                 <div class="space-y-2">
@@ -663,7 +763,7 @@
                                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                     </svg>
                                     <div class="text-sm text-gray-600">
-                                        <span class="font-medium text-indigo-600">Click to capture</span>
+                                        <span class="font-medium text-slate-900">Click to capture</span>
                                     </div>
                                 </div>
                             </div>
@@ -678,7 +778,7 @@
                         </button>
                         <p id="location-status"
                             class="text-sm text-gray-500 mt-4 flex items-center justify-center gap-2 bg-gray-50 py-2 rounded-lg inline-block px-4">
-                            <svg class="w-4 h-4 animate-pulse text-indigo-500" xmlns="http://www.w3.org/2000/svg"
+                            <svg class="w-4 h-4 animate-pulse text-slate-800" xmlns="http://www.w3.org/2000/svg"
                                 fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round"
                                     d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -693,7 +793,7 @@
                 <!-- NEW: Teacher's Student List -->
                 <section class="mt-10 pt-10 border-t border-gray-100">
                     <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                        <svg class="w-6 h-6 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        <svg class="w-6 h-6 text-slate-900" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
@@ -717,50 +817,104 @@
         class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 transition-all duration-300">
         <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all scale-100">
             <h2 id="teacher-modal-title" class="text-2xl font-bold mb-6 text-gray-900">Add New Teacher</h2>
-            <form id="add-teacher-form">
-                <div class="mb-5">
-                    <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
-                    <input type="text" id="name" name="name"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                        required>
-                </div>
-                <div class="mb-5">
-                    <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
-                    <input type="email" id="email" name="email"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                        required>
-                </div>
-                <div class="mb-5">
-                    <label for="employee_code" class="block text-sm font-semibold text-gray-700 mb-2">Employee
-                        Code</label>
-                    <input type="text" id="employee_code" name="employee_code"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                        required>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4 mb-5">
+            <form id="add-teacher-form" class="max-h-[75vh] overflow-y-auto custom-scrollbar px-1">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label for="latitude" class="block text-sm font-semibold text-gray-700 mb-2">Latitude</label>
-                        <input type="number" step="any" id="latitude" name="latitude"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                        <label for="first_name" class="block text-sm font-semibold text-gray-700 mb-1">First
+                            Name</label>
+                        <input type="text" id="first_name" name="first_name"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"
                             required>
                     </div>
                     <div>
-                        <label for="longitude" class="block text-sm font-semibold text-gray-700 mb-2">Longitude</label>
-                        <input type="number" step="any" id="longitude" name="longitude"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                        <label for="last_name" class="block text-sm font-semibold text-gray-700 mb-1">Last Name</label>
+                        <input type="text" id="last_name" name="last_name"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"
                             required>
                     </div>
                 </div>
 
-                <div class="mb-5">
-                    <label for="teacher-village" class="block text-sm font-semibold text-gray-700 mb-2">Assigned
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="teacher_email" class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                        <input type="email" id="teacher_email" name="email"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label for="teacher_phone" class="block text-sm font-semibold text-gray-700 mb-1">Phone</label>
+                        <input type="text" id="teacher_phone" name="phone"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="gender" class="block text-sm font-semibold text-gray-700 mb-1">Gender</label>
+                        <select id="gender" name="gender"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="date_of_birth" class="block text-sm font-semibold text-gray-700 mb-1">Date of
+                            Birth</label>
+                        <input type="date" id="date_of_birth" name="date_of_birth"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="qualification"
+                            class="block text-sm font-semibold text-gray-700 mb-1">Qualification</label>
+                        <input type="text" id="qualification" name="qualification"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
+                    <div>
+                        <label for="primary_subject" class="block text-sm font-semibold text-gray-700 mb-1">Primary
+                            Subject</label>
+                        <input type="text" id="primary_subject" name="primary_subject"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="hire_date" class="block text-sm font-semibold text-gray-700 mb-1">Hire Date</label>
+                        <input type="date" id="hire_date" name="hire_date"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
+                    <div>
+                        <label for="employment_status"
+                            class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
+                        <select id="employment_status" name="employment_status"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                            <option value="Full-time">Full-time</option>
+                            <option value="Part-time">Part-time</option>
+                            <option value="Contract">Contract</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="teacher_address" class="block text-sm font-semibold text-gray-700 mb-1">Address</label>
+                    <textarea id="teacher_address" name="address" rows="2"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"></textarea>
+                </div>
+
+
+
+                <div class="mb-4">
+                    <label for="teacher_village_id" class="block text-sm font-semibold text-gray-700 mb-1">Assigned
                         Village</label>
                     <div class="relative">
-                        <select id="teacher-village" name="village_id"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none cursor-pointer">
+                        <select id="teacher_village_id" name="village_id"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none appearance-none bg-white">
                             <option value="">-- Select Village --</option>
-                            <!-- Options will be populated dynamically -->
                         </select>
                         <div
                             class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
@@ -772,20 +926,20 @@
                     </div>
                 </div>
 
-                <div class="mb-8">
+                <div class="mb-6">
                     <label for="teacher-add-password"
-                        class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                        class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
                     <input type="password" id="teacher-add-password" name="password"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"
                         required>
-                    <p class="text-xs text-gray-500 mt-2 ml-1">Required for new teachers.</p>
+                    <p class="text-xs text-gray-500 mt-1">Required for new teachers.</p>
                 </div>
 
-                <div class="flex flex-col sm:flex-row justify-end gap-3">
+                <div class="flex justify-end gap-3">
                     <button type="button" id="cancel-teacher-btn"
-                        class="w-full sm:w-auto px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all">Cancel</button>
+                        class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all">Cancel</button>
                     <button type="submit" id="save-teacher-btn"
-                        class="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 hover:-translate-y-0.5 transition-all">Save
+                        class="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold hover:bg-black shadow-md transition-all">Save
                         Teacher</button>
                 </div>
             </form>
@@ -814,26 +968,71 @@
             <!-- Modal Body -->
             <div class="p-8 overflow-y-auto custom-scrollbar">
                 <!-- Teacher Info Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
-                        <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-2">Email</p>
-                        <p class="text-gray-900 font-semibold truncate" id="teacher-details-email"></p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-slate-100 p-4 rounded-xl border border-slate-200 col-span-1 md:col-span-3">
+                        <h3 class="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-3">Professional
+                            Details
+                        </h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Teacher ID</p>
+                                <p class="font-medium text-sm text-gray-900" id="teacher-details-id">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Village</p>
+                                <p class="font-medium text-sm text-gray-900" id="teacher-details-village">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Subject</p>
+                                <p class="font-medium text-sm text-gray-900" id="teacher-details-subject">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Qualification</p>
+                                <p class="font-medium text-sm text-gray-900" id="teacher-details-qualification">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Status</p>
+                                <p class="font-medium text-sm text-gray-900" id="teacher-details-status">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Hire Date</p>
+                                <p class="font-medium text-sm text-gray-900" id="teacher-details-hire-date">--</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
-                        <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-2">Employee Code</p>
-                        <p class="text-gray-900 font-semibold" id="teacher-details-code"></p>
-                    </div>
-                    <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
-                        <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-2">Assigned Village
-                        </p>
-                        <p class="text-gray-900 font-semibold" id="teacher-details-village"></p>
+
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 col-span-1 md:col-span-3">
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Personal & Contact
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Email</p>
+                                <p class="font-medium text-sm text-gray-900 truncate" id="teacher-details-email">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Phone</p>
+                                <p class="font-medium text-sm text-gray-900" id="teacher-details-phone">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Gender</p>
+                                <p class="font-medium text-sm text-gray-900" id="teacher-details-gender">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">DOB</p>
+                                <p class="font-medium text-sm text-gray-900" id="teacher-details-dob">--</p>
+                            </div>
+                            <div class="col-span-1 md:col-span-2">
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Address</p>
+                                <p class="font-medium text-sm text-gray-900" id="teacher-details-address">--</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Attendance History Section -->
                 <div>
                     <h3 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        <svg class="w-5 h-5 text-slate-900" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
@@ -853,32 +1052,76 @@
         class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 transition-all duration-300">
         <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all scale-100">
             <h2 class="text-2xl font-bold mb-6 text-gray-900">Add New Village</h2>
-            <form id="add-village-form">
-                <div class="mb-5">
-                    <label for="village_name" class="block text-sm font-semibold text-gray-700 mb-2">Village
-                        Name</label>
-                    <input type="text" id="village_name" name="village_name"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                        required>
+            <form id="add-village-form" class="max-h-[75vh] overflow-y-auto custom-scrollbar px-1">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="village_name" class="block text-sm font-semibold text-gray-700 mb-1">Village
+                            Name</label>
+                        <input type="text" id="village_name" name="village_name"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label for="district" class="block text-sm font-semibold text-gray-700 mb-1">District</label>
+                        <input type="text" id="district" name="district"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
+                    <div>
+                        <label for="state" class="block text-sm font-semibold text-gray-700 mb-1">State</label>
+                        <input type="text" id="state" name="state"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label for="country" class="block text-sm font-semibold text-gray-700 mb-1">Country</label>
+                        <input type="text" id="country" name="country" value="India"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
+                    <div>
+                        <label for="pincode" class="block text-sm font-semibold text-gray-700 mb-1">Pincode</label>
+                        <input type="text" id="pincode" name="pincode"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"
+                            required>
+                    </div>
+                    <div>
+                        <label for="established_date" class="block text-sm font-semibold text-gray-700 mb-1">Est.
+                            Date</label>
+                        <input type="date" id="established_date" name="established_date"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
                 </div>
-                <div class="mb-5">
-                    <label for="state" class="block text-sm font-semibold text-gray-700 mb-2">State</label>
-                    <input type="text" id="state" name="state"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                        required>
+                <div class="mb-4">
+                    <label for="village_phone" class="block text-sm font-semibold text-gray-700 mb-1">Phone</label>
+                    <input type="text" id="village_phone" name="phone"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
                 </div>
-                <div class="mb-8">
-                    <label for="pincode" class="block text-sm font-semibold text-gray-700 mb-2">Pincode</label>
-                    <input type="text" id="pincode" name="pincode"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                        required>
+                <div class="mb-4">
+                    <label for="village_address" class="block text-sm font-semibold text-gray-700 mb-1">Address</label>
+                    <textarea id="village_address" name="address" rows="2"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"></textarea>
                 </div>
-
-                <div class="flex flex-col sm:flex-row justify-end gap-3">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="latitude" class="block text-sm font-semibold text-gray-700 mb-1">Latitude</label>
+                        <input type="number" step="any" id="latitude" name="latitude"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
+                    <div>
+                        <label for="longitude" class="block text-sm font-semibold text-gray-700 mb-1">Longitude</label>
+                        <input type="number" step="any" id="longitude" name="longitude"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label for="village_notes" class="block text-sm font-semibold text-gray-700 mb-1">Notes</label>
+                    <textarea id="village_notes" name="notes" rows="2"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-3">
                     <button type="button" id="cancel-village-btn"
-                        class="w-full sm:w-auto px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all">Cancel</button>
+                        class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all">Cancel</button>
                     <button type="submit"
-                        class="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 hover:-translate-y-0.5 transition-all">Save
+                        class="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold hover:bg-black shadow-md transition-all">Save
                         Village</button>
                 </div>
             </form>
@@ -889,27 +1132,50 @@
         class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 transition-all duration-300">
         <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md transform transition-all scale-100">
             <h2 id="student-modal-title" class="text-2xl font-bold mb-6 text-gray-900">Add New Student</h2>
-            <form id="add-student-form">
-                <div class="grid grid-cols-2 gap-4 mb-5">
+            <form id="add-student-form" class="max-h-[75vh] overflow-y-auto custom-scrollbar px-1">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
-                        <label for="first_name" class="block text-sm font-semibold text-gray-700 mb-2">First
+                        <label for="student_first_name" class="block text-sm font-semibold text-gray-700 mb-1">First
                             Name</label>
-                        <input type="text" id="first_name" name="first_name"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                        <input type="text" id="student_first_name" name="first_name"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"
                             required>
                     </div>
                     <div>
-                        <label for="last_name" class="block text-sm font-semibold text-gray-700 mb-2">Last Name</label>
-                        <input type="text" id="last_name" name="last_name"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
+                        <label for="student_last_name" class="block text-sm font-semibold text-gray-700 mb-1">Last
+                            Name</label>
+                        <input type="text" id="student_last_name" name="last_name"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"
                             required>
                     </div>
                 </div>
-                <div class="mb-5">
-                    <label for="student-village" class="block text-sm font-semibold text-gray-700 mb-2">Village</label>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="student_gender"
+                            class="block text-sm font-semibold text-gray-700 mb-1">Gender</label>
+                        <select id="student_gender" name="gender"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="student_dob" class="block text-sm font-semibold text-gray-700 mb-1">Date of
+                            Birth</label>
+                        <input type="date" id="student_dob" name="date_of_birth"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="student_village_id"
+                        class="block text-sm font-semibold text-gray-700 mb-1">Village</label>
                     <div class="relative">
-                        <select id="student-village" name="village_id"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl bg-white appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none cursor-pointer"
+                        <select id="student_village_id" name="village_id"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none appearance-none bg-white"
                             required>
                             <option value="">-- Select Village --</option>
                         </select>
@@ -922,18 +1188,77 @@
                         </div>
                     </div>
                 </div>
-                <div class="mb-8">
-                    <label for="age" class="block text-sm font-semibold text-gray-700 mb-2">Age</label>
-                    <input type="number" id="age" name="age"
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all outline-none"
-                        required>
+
+                <div class="border-t border-gray-100 my-4 pt-4">
+                    <h3 class="text-sm font-bold text-gray-900 mb-3 uppercase tracking-wider">Guardian Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="guardian_name" class="block text-sm font-semibold text-gray-700 mb-1">Guardian
+                                Name</label>
+                            <input type="text" id="guardian_name" name="guardian_name"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                        </div>
+                        <div>
+                            <label for="guardian_phone" class="block text-sm font-semibold text-gray-700 mb-1">Guardian
+                                Phone</label>
+                            <input type="text" id="guardian_phone" name="guardian_phone"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="guardian_email" class="block text-sm font-semibold text-gray-700 mb-1">Guardian
+                            Email</label>
+                        <input type="email" id="guardian_email" name="guardian_email"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row justify-end gap-3">
+                <div class="mb-4">
+                    <label for="student_address" class="block text-sm font-semibold text-gray-700 mb-1">Address</label>
+                    <textarea id="student_address" name="address" rows="2"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="admission_date" class="block text-sm font-semibold text-gray-700 mb-1">Admission
+                            Date</label>
+                        <input type="date" id="admission_date" name="admission_date"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
+                    <div>
+                        <label for="admission_number" class="block text-sm font-semibold text-gray-700 mb-1">Admission
+                            Number</label>
+                        <input type="text" id="admission_number" name="admission_number"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label for="student_status"
+                            class="block text-sm font-semibold text-gray-700 mb-1">Status</label>
+                        <select id="student_status" name="status"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                            <option value="Graduated">Graduated</option>
+                            <option value="Dropped">Dropped</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="mb-6">
+                    <label for="student_notes" class="block text-sm font-semibold text-gray-700 mb-1">Notes</label>
+                    <textarea id="student_notes" name="notes" rows="2"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-3">
                     <button type="button" id="cancel-student-btn"
-                        class="w-full sm:w-auto px-6 py-3 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-all">Cancel</button>
+                        class="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all">Cancel</button>
                     <button type="submit" id="save-student-btn"
-                        class="w-full sm:w-auto px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-500/30 hover:-translate-y-0.5 transition-all">Save
+                        class="px-6 py-2 bg-slate-900 text-white rounded-lg font-bold hover:bg-black shadow-md transition-all">Save
                         Student</button>
                 </div>
             </form>
@@ -962,21 +1287,74 @@
             <!-- Modal Body -->
             <div class="p-8 overflow-y-auto custom-scrollbar">
                 <!-- Student Info Grid -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
-                        <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-2">Village</p>
-                        <p class="text-gray-900 font-semibold" id="student-details-village"></p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-slate-100 p-4 rounded-xl border border-slate-200 col-span-1 md:col-span-3">
+                        <h3 class="text-[10px] font-bold text-slate-600 uppercase tracking-wider mb-3">Basic
+                            Information
+                        </h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Village</p>
+                                <p class="font-medium text-sm text-gray-900" id="student-details-village">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Age</p>
+                                <p class="font-medium text-sm text-gray-900" id="student-details-age">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Gender</p>
+                                <p class="font-medium text-sm text-gray-900" id="student-details-gender">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">DOB</p>
+                                <p class="font-medium text-sm text-gray-900" id="student-details-dob">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Status</p>
+                                <p class="font-medium text-sm text-gray-900" id="student-details-status">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Admission No</p>
+                                <p class="font-medium text-sm text-gray-900" id="student-details-admission-no">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Admission Date</p>
+                                <p class="font-medium text-sm text-gray-900" id="student-details-admission-date">--</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-100">
-                        <p class="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-2">Age</p>
-                        <p class="text-gray-900 font-semibold" id="student-details-age"></p>
+
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100 col-span-1 md:col-span-3">
+                        <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Guardian & Contact
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Guardian Name</p>
+                                <p class="font-medium text-sm text-gray-900" id="student-details-guardian-name">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Phone</p>
+                                <p class="font-medium text-sm text-gray-900" id="student-details-guardian-phone">--</p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Email</p>
+                                <p class="font-medium text-sm text-gray-900" id="student-details-guardian-email">--</p>
+                            </div>
+                            <div class="col-span-1 md:col-span-3">
+                                <p class="text-[10px] text-gray-500 uppercase mb-0.5">Address</p>
+                                <p class="font-medium text-sm text-gray-900" id="student-details-address">--</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-100 col-span-1 md:col-span-3">
+                        <h3 class="text-[10px] font-bold text-yellow-600 uppercase tracking-wider mb-2">Notes</h3>
+                        <p class="text-sm text-gray-700" id="student-details-notes">--</p>
                     </div>
                 </div>
-
                 <!-- Attendance History Section -->
                 <div>
                     <h3 class="text-lg font-bold text-gray-900 mb-5 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        <svg class="w-5 h-5 text-slate-900" xmlns="http://www.w3.org/2000/svg" fill="none"
                             viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round"
                                 d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
@@ -1040,6 +1418,73 @@
         </div>
     </div>
 
+    <!-- CSV Upload Modal -->
+    <div id="csv-upload-modal"
+        class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center hidden z-50 p-4 transition-all duration-300">
+        <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden transform transition-all scale-100">
+            <div class="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h2 class="text-xl font-bold text-gray-900">Bulk Upload Students</h2>
+                <button id="close-csv-modal-btn"
+                    class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-full transition-all">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-8">
+                <form id="csv-upload-form" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Select Village</label>
+                        <select name="village_id" id="csv-village-select" required
+                            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-slate-800 focus:border-slate-800 outline-none transition-all bg-gray-50 focus:bg-white">
+                            <option value="">-- Select Village --</option>
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">All students in the CSV will be assigned to this village.
+                        </p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-2">Upload CSV File</label>
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:bg-gray-50 transition-colors cursor-pointer"
+                            id="csv-drop-zone">
+                            <div class="space-y-1 text-center">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none"
+                                    viewBox="0 0 48 48" aria-hidden="true">
+                                    <path
+                                        d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <div class="flex text-sm text-gray-600 justify-center">
+                                    <label for="csv-file-input"
+                                        class="relative cursor-pointer bg-white rounded-md font-medium text-slate-900 hover:text-slate-800 focus-within:outline-none">
+                                        <span>Upload a file</span>
+                                        <input id="csv-file-input" name="file" type="file" class="sr-only" accept=".csv"
+                                            required>
+                                    </label>
+                                    <p class="pl-1">or drag and drop</p>
+                                </div>
+                                <p class="text-xs text-gray-500">CSV up to 10MB</p>
+                                <p id="csv-file-name" class="text-sm font-semibold text-gray-900 mt-2"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="pt-2">
+                        <button type="submit" id="submit-csv-btn"
+                            class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold shadow-lg shadow-slate-800/30 hover:bg-black hover:-translate-y-0.5 transition-all flex justify-center items-center gap-2">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                            </svg>
+                            Upload Students
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div id="toast"
         class="fixed bottom-5 right-5 left-5 sm:left-auto bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300 z-30">
         <p id="toast-message"></p>
@@ -1090,7 +1535,6 @@
             const teacherLoginForm = document.getElementById('teacher-login-form');
             const backToRolesBtns = document.querySelectorAll('.back-to-roles-btn');
 
-            const tabs = document.querySelectorAll('.tab-link');
             const pages = document.querySelectorAll('.page');
 
             const dashboardStatsEl = document.getElementById('dashboard-stats');
@@ -1130,7 +1574,7 @@
             const saveTeacherBtn = document.getElementById('save-teacher-btn');
             const cancelTeacherBtn = document.getElementById('cancel-teacher-btn');
             const addTeacherForm = document.getElementById('add-teacher-form');
-            const teacherVillageSelect = document.getElementById('teacher-village');
+            const teacherVillageSelect = document.getElementById('teacher_village_id');
             const teacherRosterFilter = document.getElementById('teacher-roster-filter');
             const passwordFieldContainer = document.getElementById('teacher-add-password').parentElement;
 
@@ -1154,7 +1598,7 @@
             const addStudentForm = document.getElementById('add-student-form');
             const saveStudentBtn = document.getElementById('save-student-btn');
             const cancelStudentBtn = document.getElementById('cancel-student-btn');
-            const studentVillageSelect = document.getElementById('student-village');
+            const studentVillageSelect = document.getElementById('student_village_id');
             const studentRosterFilter = document.getElementById('student-roster-filter');
 
             // --- Student Details Modal ---
@@ -1204,11 +1648,11 @@
                 let html = '';
                 for (let i = 0; i < 6; i++) {
                     html += `
-                    <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-lg skeleton flex items-center gap-5">
-                        <div class="h-16 w-16 bg-gray-200 rounded-xl flex-shrink-0"></div>
+                    <div class="p-4 bg-white border border-gray-100 rounded-xl shadow-sm skeleton flex items-center gap-4">
+                        <div class="h-12 w-12 bg-gray-200 rounded-lg flex-shrink-0"></div>
                         <div class="w-full">
-                            <div class="h-4 bg-gray-200 rounded-md w-1/2 mb-2"></div>
-                            <div class="h-8 bg-gray-200 rounded-md w-1/3"></div>
+                            <div class="h-3 bg-gray-200 rounded-md w-1/2 mb-2"></div>
+                            <div class="h-6 bg-gray-200 rounded-md w-1/3"></div>
                         </div>
                     </div>`;
                 }
@@ -1260,37 +1704,10 @@
             };
 
             // Make globally available
-            // Make globally available
             window.switchTab = (tabId) => {
-                // Deactivate all tabs
-                tabs.forEach(t => {
-                    t.classList.remove('active');
-                });
-                // Deactivate all pages
-                pages.forEach(p => {
-                    p.classList.remove('page-active');
-                });
-
-                // Activate the clicked tab
-                const activeTab = document.getElementById(tabId);
-                if (activeTab) {
-                    activeTab.classList.add('active');
-                    const pageId = tabId.replace('tab-', 'page-');
-                    const activePage = document.getElementById(pageId);
-                    if (activePage) {
-                        activePage.classList.add('page-active');
-                    }
-
-                    // Load data based on tab
-                    if (tabId === 'tab-villages') {
-                        fetchVillages();
-                    } else if (tabId === 'tab-teachers') {
-                        fetchTeachersForAdmin();
-                    } else if (tabId === 'tab-students') {
-                        fetchStudents();
-                    } else if (tabId === 'tab-dashboard') {
-                        fetchDashboardStats();
-                    }
+                const tabEl = document.getElementById(tabId);
+                if (tabEl) {
+                    tabEl.click();
                 }
             };
 
@@ -1331,7 +1748,7 @@
                                 longitude: position.coords.longitude,
                             };
                             locationStatusEl.innerHTML = `
-                                <svg class="w-4 h-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 21h-2.25m-2.25H5.25A2.25 2.25 0 0 1 3 18.75V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25v13.5A2.25 2.25 0 0 1 18.75 21Z" /></svg>
+                                <svg class="w-4 h-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
                                 Location captured successfully.`;
                             locationStatusEl.classList.replace('text-gray-500', 'text-green-600');
                         },
@@ -1505,67 +1922,67 @@
                     const absentStudentsCount = Math.max(0, totalStudents - presentStudentsCount);
 
                     // Update Dashboard UI
-                    dashboardStatsEl.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6";
+                    dashboardStatsEl.className = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4";
                     dashboardStatsEl.innerHTML = `
                         <!-- TEACHERS SECTION -->
-                        <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center gap-5 hover:shadow-md transition-shadow">
-                            <div class="flex-shrink-0 bg-indigo-50 text-indigo-600 p-4 rounded-xl">
-                                <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>
+                        <div class="p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div class="flex-shrink-0 bg-slate-100 text-slate-900 p-3 rounded-lg">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" /></svg>
                             </div>
                             <div>
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Teachers</h3>
-                                <p class="text-3xl font-bold text-gray-900 mt-1">${totalTeachers}</p>
+                                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Teachers</h3>
+                                <p class="text-2xl font-bold text-gray-900 mt-0.5">${totalTeachers}</p>
                             </div>
                         </div>
 
-                        <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center gap-5 hover:shadow-md transition-shadow">
-                             <div class="flex-shrink-0 bg-green-50 text-green-600 p-4 rounded-xl">
-                                <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 21h-2.25m-2.25H5.25A2.25 2.25 0 0 1 3 18.75V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25v13.5A2.25 2.25 0 0 1 18.75 21Z" /></svg>
+                        <div class="p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                             <div class="flex-shrink-0 bg-green-50 text-green-600 p-3 rounded-lg">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 21h-2.25m-2.25H5.25A2.25 2.25 0 0 1 3 18.75V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25v13.5A2.25 2.25 0 0 1 18.75 21Z" /></svg>
                             </div>
                             <div>
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Teachers Present</h3>
-                                <p class="text-3xl font-bold text-green-600 mt-1">${presentTeachersCount}</p>
+                                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Teachers Present</h3>
+                                <p class="text-2xl font-bold text-green-600 mt-0.5">${presentTeachersCount}</p>
                             </div>
                         </div>
 
-                        <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center gap-5 hover:shadow-md transition-shadow">
-                            <div class="flex-shrink-0 bg-red-50 text-red-600 p-4 rounded-xl">
-                                <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+                        <div class="p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div class="flex-shrink-0 bg-red-50 text-red-600 p-3 rounded-lg">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
                             </div>
                             <div>
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Teachers Absent</h3>
-                                <p class="text-3xl font-bold text-red-600 mt-1">${absentTeachersCount}</p>
+                                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Teachers Absent</h3>
+                                <p class="text-2xl font-bold text-red-600 mt-0.5">${absentTeachersCount}</p>
                             </div>
                         </div>
 
                         <!-- STUDENTS SECTION -->
-                        <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center gap-5 hover:shadow-md transition-shadow">
-                            <div class="flex-shrink-0 bg-blue-50 text-blue-600 p-4 rounded-xl">
-                                <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.499 5.516 51.55 51.55 0 0 1-1.987 1.006m-20.501 0c-1.109.481-2.241.977-3.398 1.478a.75.75 0 0 0-.258 1.408c.55.22 1.106.42 1.666.603m22.5 0c.56-.183 1.116-.383 1.666-.603a.75.75 0 0 0-.258-1.408c-1.157-.5-2.29-.997-3.398-1.478" /></svg>
+                        <div class="p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div class="flex-shrink-0 bg-blue-50 text-blue-600 p-3 rounded-lg">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.499 5.516 51.55 51.55 0 0 1-1.987 1.006m-20.501 0c-1.109.481-2.241.977-3.398 1.478a.75.75 0 0 0-.258 1.408c.55.22 1.106.42 1.666.603m22.5 0c.56-.183 1.116-.383 1.666-.603a.75.75 0 0 0-.258-1.408c-1.157-.5-2.29-.997-3.398-1.478" /></svg>
                             </div>
                             <div>
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Students</h3>
-                                <p class="text-3xl font-bold text-gray-900 mt-1">${totalStudents}</p>
+                                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Students</h3>
+                                <p class="text-2xl font-bold text-gray-900 mt-0.5">${totalStudents}</p>
                             </div>
                         </div>
 
-                        <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center gap-5 hover:shadow-md transition-shadow">
-                             <div class="flex-shrink-0 bg-green-50 text-green-600 p-4 rounded-xl">
-                                <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 21h-2.25m-2.25H5.25A2.25 2.25 0 0 1 3 18.75V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25v13.5A2.25 2.25 0 0 1 18.75 21Z" /></svg>
+                        <div class="p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                             <div class="flex-shrink-0 bg-green-50 text-green-600 p-3 rounded-lg">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 21h-2.25m-2.25H5.25A2.25 2.25 0 0 1 3 18.75V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25v13.5A2.25 2.25 0 0 1 18.75 21Z" /></svg>
                             </div>
                             <div>
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Students Present</h3>
-                                <p class="text-3xl font-bold text-green-600 mt-1">${presentStudentsCount}</p>
+                                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Students Present</h3>
+                                <p class="text-2xl font-bold text-green-600 mt-0.5">${presentStudentsCount}</p>
                             </div>
                         </div>
 
-                        <div class="p-6 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center gap-5 hover:shadow-md transition-shadow">
-                            <div class="flex-shrink-0 bg-red-50 text-red-600 p-4 rounded-xl">
-                                <svg class="w-8 h-8" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+                        <div class="p-4 bg-white border border-gray-100 rounded-xl shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <div class="flex-shrink-0 bg-red-50 text-red-600 p-3 rounded-lg">
+                                <svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
                             </div>
                             <div>
-                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Students Absent</h3>
-                                <p class="text-3xl font-bold text-red-600 mt-1">${absentStudentsCount}</p>
+                                <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Students Absent</h3>
+                                <p class="text-2xl font-bold text-red-600 mt-0.5">${absentStudentsCount}</p>
                             </div>
                         </div>
                     `;
@@ -1601,9 +2018,9 @@
                         <table class="w-full text-sm text-left text-gray-500">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                                 <tr>
+                                    <th scope="col" class="px-6 py-3">ID</th>
                                     <th scope="col" class="px-6 py-3">Name</th>
                                     <th scope="col" class="px-6 py-3">Email</th>
-                                    <th scope="col" class="px-6 py-3">Code</th>
                                     <th scope="col" class="px-6 py-3">Village</th>
                                     <th scope="col" class="px-6 py-3 text-right">Actions</th>
                                 </tr>
@@ -1611,28 +2028,44 @@
                             <tbody>
                                 ${teachers.map(t => `
                                     <tr class="bg-white border-b hover:bg-gray-50">
-                                        <td data-label="Name" class="px-6 py-4 font-medium text-indigo-600 hover:text-indigo-800 cursor-pointer teacher-name-link"
+                                        <td data-label="ID" class="px-6 py-4 text-gray-500 font-mono text-xs">#${t.id}</td>
+                                        <td data-label="Name" class="px-6 py-4 font-medium text-slate-900 hover:text-slate-900 cursor-pointer teacher-name-link"
                                             data-id="${t.id}"
                                             data-name="${t.name}"
                                             data-email="${t.email}"
                                             data-code="${t.employee_code}"
-                                            data-village="${t.village_name || 'Unassigned'}">
+                                            data-village="${t.village_name || 'Unassigned'}"
+                                            data-phone="${t.phone || ''}"
+                                            data-gender="${t.gender || ''}"
+                                            data-dob="${t.date_of_birth ? t.date_of_birth.split('T')[0] : ''}"
+                                            data-qualification="${t.qualification || ''}"
+                                            data-primary-subject="${t.primary_subject || ''}"
+                                            data-employment-status="${t.employment_status || ''}"
+                                            data-hire-date="${t.hire_date ? t.hire_date.split('T')[0] : ''}"
+                                            data-address="${t.address || ''}">
                                             ${t.name}
                                         </td>
                                         <td data-label="Email" class="px-6 py-4">${t.email}</td>
-                                        <td data-label="Code" class="px-6 py-4">${t.employee_code}</td>
                                         <td data-label="Village" class="px-6 py-4">${t.village_name || '<span class="text-gray-400 italic">Unassigned</span>'}</td>
                                         <td data-label="Actions" class="px-6 py-4 text-right">
-                                            <div class="flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-0 sm:space-x-4">
+                                            <div class="flex flex-row justify-start sm:justify-end gap-3">
                                                 <button 
                                                     data-id="${t.id}" 
-                                                    data-name="${t.name}" 
+                                                    data-first-name="${t.first_name || ''}" 
+                                                    data-last-name="${t.last_name || ''}" 
                                                     data-email="${t.email}" 
                                                     data-code="${t.employee_code}" 
-                                                    data-latitude="${t.latitude || ''}" 
-                                                    data-longitude="${t.longitude || ''}" 
+ 
                                                     data-village-id="${t.village_id || ''}"
-                                                    class="edit-teacher-btn font-medium text-indigo-600 hover:underline text-center sm:text-right">Edit</button>
+                                                    data-gender="${t.gender || ''}"
+                                                    data-dob="${t.date_of_birth ? t.date_of_birth.split('T')[0] : ''}"
+                                                    data-hire-date="${t.hire_date ? t.hire_date.split('T')[0] : ''}"
+                                                    data-phone="${t.phone || ''}"
+                                                    data-qualification="${t.qualification || ''}"
+                                                    data-primary-subject="${t.primary_subject || ''}"
+                                                    data-employment-status="${t.employment_status || ''}"
+                                                    data-address="${t.address || ''}"
+                                                    class="edit-teacher-btn font-medium text-slate-900 hover:underline text-center sm:text-right">Edit</button>
                                                 <button data-teacher-id="${t.id}" data-teacher-name="${t.name}" class="delete-teacher-btn font-medium text-red-600 hover:underline text-center sm:text-right">Delete</button>
                                             </div>
                                         </td>
@@ -1797,6 +2230,7 @@
                         <table class="w-full text-sm text-left text-gray-500">
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                                 <tr>
+                                    <th scope="col" class="px-6 py-3">ID</th>
                                     <th scope="col" class="px-6 py-3">Name</th>
                                     <th scope="col" class="px-6 py-3">Age</th>
                                     <th scope="col" class="px-6 py-3">Village</th>
@@ -1806,24 +2240,45 @@
                             <tbody>
                                 ${students.map(s => `
                                     <tr class="bg-white border-b hover:bg-gray-50">
-                                        <td data-label="Name" class="px-6 py-4 font-medium text-indigo-600 hover:text-indigo-800 cursor-pointer student-name-link" 
+                                        <td data-label="ID" class="px-6 py-4 text-gray-500 font-mono text-xs">#${s.id}</td>
+                                        <td data-label="Name" class="px-6 py-4 font-medium text-slate-900 hover:text-slate-900 cursor-pointer student-name-link" 
                                             data-id="${s.id}" 
                                             data-name="${s.first_name} ${s.last_name}"
                                             data-village="${s.village_name || 'Unassigned'}"
-                                            data-age="${s.age}">
+                                            data-age="${s.age}"
+                                            data-gender="${s.gender || ''}"
+                                            data-dob="${s.date_of_birth ? s.date_of_birth.split('T')[0] : ''}"
+                                            data-guardian-name="${s.guardian_name || ''}"
+                                            data-guardian-phone="${s.guardian_phone || ''}"
+                                            data-guardian-email="${s.guardian_email || ''}"
+                                            data-address="${s.address || ''}"
+                                            data-admission-date="${s.admission_date ? s.admission_date.split('T')[0] : ''}"
+                                            data-admission-number="${s.admission_number || ''}"
+                                            data-status="${s.status || ''}"
+                                            data-notes="${s.notes || ''}">
                                             ${s.first_name} ${s.last_name}
                                         </td>
                                         <td data-label="Age" class="px-6 py-4">${s.age}</td>
                                         <td data-label="Village" class="px-6 py-4">${s.village_name || '<span class="text-gray-400 italic">Unassigned</span>'}</td>
                                         <td data-label="Actions" class="px-6 py-4 text-right">
-                                            <div class="flex flex-col sm:flex-row sm:justify-end gap-2 sm:gap-0 sm:space-x-4">
+                                            <div class="flex flex-row justify-start sm:justify-end gap-3">
                                                 <button 
                                                     data-id="${s.id}" 
                                                     data-first-name="${s.first_name}" 
                                                     data-last-name="${s.last_name}" 
                                                     data-age="${s.age}" 
                                                     data-village-id="${s.village_id || ''}"
-                                                    class="edit-student-btn font-medium text-indigo-600 hover:underline text-center sm:text-right">Edit</button>
+                                                    data-gender="${s.gender || ''}"
+                                                    data-dob="${s.date_of_birth ? s.date_of_birth.split('T')[0] : ''}"
+                                                    data-guardian-name="${s.guardian_name || ''}"
+                                                    data-guardian-phone="${s.guardian_phone || ''}"
+                                                    data-guardian-email="${s.guardian_email || ''}"
+                                                    data-address="${s.address || ''}"
+                                                    data-admission-date="${s.admission_date ? s.admission_date.split('T')[0] : ''}"
+                                                    data-admission-number="${s.admission_number || ''}"
+                                                    data-status="${s.status || ''}"
+                                                    data-notes="${s.notes || ''}"
+                                                    class="edit-student-btn font-medium text-slate-900 hover:underline text-center sm:text-right">Edit</button>
                                                 <button data-student-id="${s.id}" data-student-name="${s.first_name} ${s.last_name}" class="delete-student-btn font-medium text-red-600 hover:underline text-center sm:text-right">Delete</button>
                                             </div>
                                         </td>
@@ -1953,14 +2408,14 @@
                                         <div class="flex flex-col gap-2">
                                             <div class="flex items-center gap-2">
                                                 <span class="text-xs font-semibold text-gray-400 w-6">IN</span>
-                                                ${r.check_in_photo_url1 ? `<a href="${API_BASE_URL}${r.check_in_photo_url1}" target="_blank" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100 hover:bg-indigo-100 transition">Photo 1</a>` : '<span class="text-xs text-gray-300">N/A</span>'}
-                                                ${r.check_in_photo_url2 ? `<a href="${API_BASE_URL}${r.check_in_photo_url2}" target="_blank" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100 hover:bg-indigo-100 transition">Photo 2</a>` : ''}
+                                                ${r.check_in_photo_url1 ? `<a href="${API_BASE_URL}${r.check_in_photo_url1}" target="_blank" class="text-xs bg-slate-100 text-slate-900 px-2 py-1 rounded border border-slate-200 hover:bg-slate-200 transition">Photo 1</a>` : '<span class="text-xs text-gray-300">N/A</span>'}
+                                                ${r.check_in_photo_url2 ? `<a href="${API_BASE_URL}${r.check_in_photo_url2}" target="_blank" class="text-xs bg-slate-100 text-slate-900 px-2 py-1 rounded border border-slate-200 hover:bg-slate-200 transition">Photo 2</a>` : ''}
                                             </div>
                                             ${r.check_out_photo_url1 ? `
                                             <div class="flex items-center gap-2">
                                                 <span class="text-xs font-semibold text-gray-400 w-6">OUT</span>
-                                                <a href="${API_BASE_URL}${r.check_out_photo_url1}" target="_blank" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100 hover:bg-indigo-100 transition">Photo 1</a>
-                                                ${r.check_out_photo_url2 ? `<a href="${API_BASE_URL}${r.check_out_photo_url2}" target="_blank" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100 hover:bg-indigo-100 transition">Photo 2</a>` : ''}
+                                                <a href="${API_BASE_URL}${r.check_out_photo_url1}" target="_blank" class="text-xs bg-slate-100 text-slate-900 px-2 py-1 rounded border border-slate-200 hover:bg-slate-200 transition">Photo 1</a>
+                                                ${r.check_out_photo_url2 ? `<a href="${API_BASE_URL}${r.check_out_photo_url2}" target="_blank" class="text-xs bg-slate-100 text-slate-900 px-2 py-1 rounded border border-slate-200 hover:bg-slate-200 transition">Photo 2</a>` : ''}
                                             </div>` : ''}
                                         </div>
                                     </td>
@@ -1997,7 +2452,7 @@
                         <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 border-b last:border-b-0 gap-4 hover:bg-gray-50 transition">
                             <div>
                                 <button onclick="showTeacherWeeklyReport(${r.teacher_id}, '${r.teacher_name}')" 
-                                    class="font-semibold text-indigo-600 hover:text-indigo-800 hover:underline text-left text-lg mb-1">
+                                    class="font-semibold text-slate-900 hover:text-slate-900 hover:underline text-left text-lg mb-1">
                                     ${r.teacher_name}
                                 </button>
                                 <div class="flex items-center gap-3 text-sm">
@@ -2015,14 +2470,14 @@
                             <div class="flex flex-col text-right gap-2">
                                 <div class="flex gap-2 justify-end items-center">
                                     <span class="text-xs font-semibold text-gray-400 uppercase">In</span>
-                                    <a href="${API_BASE_URL}${r.check_in_photo_url1}" target="_blank" class="text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded hover:bg-indigo-100 transition">Photo 1</a> 
-                                    <a href="${API_BASE_URL}${r.check_in_photo_url2}" target="_blank" class="text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded hover:bg-indigo-100 transition">Photo 2</a>
+                                    <a href="${API_BASE_URL}${r.check_in_photo_url1}" target="_blank" class="text-xs text-slate-900 bg-slate-100 px-2 py-1 rounded hover:bg-slate-200 transition">Photo 1</a> 
+                                    <a href="${API_BASE_URL}${r.check_in_photo_url2}" target="_blank" class="text-xs text-slate-900 bg-slate-100 px-2 py-1 rounded hover:bg-slate-200 transition">Photo 2</a>
                                 </div>
                                 ${r.check_out_photo_url1 ? `
                                 <div class="flex gap-2 justify-end items-center">
                                     <span class="text-xs font-semibold text-gray-400 uppercase">Out</span>
-                                    <a href="${API_BASE_URL}${r.check_out_photo_url1}" target="_blank" class="text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded hover:bg-indigo-100 transition">Photo 1</a> 
-                                    <a href="${API_BASE_URL}${r.check_out_photo_url2}" target="_blank" class="text-xs text-indigo-600 bg-indigo-50 px-2 py-1 rounded hover:bg-indigo-100 transition">Photo 2</a>
+                                    <a href="${API_BASE_URL}${r.check_out_photo_url1}" target="_blank" class="text-xs text-slate-900 bg-slate-100 px-2 py-1 rounded hover:bg-slate-200 transition">Photo 1</a> 
+                                    <a href="${API_BASE_URL}${r.check_out_photo_url2}" target="_blank" class="text-xs text-slate-900 bg-slate-100 px-2 py-1 rounded hover:bg-slate-200 transition">Photo 2</a>
                                 </div>` : ''}
                             </div>
                         </div>`).join('');
@@ -2055,7 +2510,7 @@
                         <div class="p-4 border-b last:border-b-0 hover:bg-gray-50 transition flex justify-between items-center">
                             <div>
                                 <button onclick="showTeacherWeeklyReport(${t.id}, '${t.name}')" 
-                                    class="font-semibold text-indigo-600 hover:text-indigo-800 hover:underline text-left text-lg">
+                                    class="font-semibold text-slate-900 hover:text-slate-900 hover:underline text-left text-lg">
                                     ${t.name}
                                 </button>
                                 <p class="text-sm text-gray-500">${t.email}</p>
@@ -2171,46 +2626,77 @@
             const updateTeacherUI = (status) => {
                 teacherLoading.classList.add('hidden');
                 resetTeacherStatusUI(); // Reset styles first
+                const teacherStudentsList = document.getElementById('teacher-students-list');
 
                 if (status.status === 'not_checked_in') {
                     teacherPageTitle.textContent = 'Mark Check-In';
                     teacherStatusMessage.classList.add('hidden');
                     attendanceForm.classList.remove('hidden');
                     submitAttendanceBtn.textContent = 'Submit Check-In';
-                    submitAttendanceBtn.classList.replace('bg-blue-600', 'bg-green-600');
-                    submitAttendanceBtn.classList.replace('hover:bg-blue-700', 'hover:bg-green-700');
+                    submitAttendanceBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    submitAttendanceBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+
+                    // Show student attendance form during Check-In
+                    if (teacherStudentsList) teacherStudentsList.classList.remove('hidden');
+
+                    if (status.last_session_completed) {
+                        // Optional: Show a message saying "Ready for next session"
+                    }
+
                 } else if (status.status === 'checked_in') {
                     teacherPageTitle.textContent = 'Mark Check-Out';
-                    teacherStatusMessage.classList.remove('hidden');
+                    teacherStatusMessage.classList.add('hidden'); // Hide status message as requested
                     attendanceForm.classList.remove('hidden');
 
                     // Add new styles for "checked in"
-                    teacherStatusMessage.classList.add('bg-green-50', 'border', 'border-green-200', 'p-6', 'rounded-lg', 'flex', 'flex-col', 'sm:flex-row', 'items-center', 'gap-4');
-                    teacherStatusHeading.innerHTML = `
-                        <svg class="w-8 h-8 text-green-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                        <span class="text-xl font-semibold text-green-800">You are checked in!</span>`;
+                    // teacherStatusMessage.classList.add('bg-green-50', 'border', 'border-green-200', 'p-6', 'rounded-lg', 'flex', 'flex-col', 'sm:flex-row', 'items-center', 'gap-4');
+                    // teacherStatusHeading.innerHTML = '';
 
-                    const checkInTime = status.check_in_time;
-                    teacherStatusDetails.textContent = `Checked in at: ${new Date(checkInTime).toLocaleTimeString()}`;
-                    teacherStatusDetails.classList.add('text-green-700', 'mt-1', 'sm:mt-0', 'sm:ml-auto');
+                    // const checkInTime = status.check_in_time;
+                    // teacherStatusDetails.innerHTML = `<span class="text-xl font-semibold text-green-800">Checked In</span> <span class="text-green-600 font-medium mx-2">•</span> <span class="text-green-700 font-medium">${new Date(checkInTime).toLocaleTimeString()}</span>`;
+                    // teacherStatusDetails.className = 'flex items-center'; // Reset classes
+
 
                     submitAttendanceBtn.textContent = 'Submit Check-Out';
-                    submitAttendanceBtn.classList.replace('bg-green-600', 'bg-blue-600');
-                    submitAttendanceBtn.classList.replace('hover:bg-green-700', 'hover:bg-blue-700');
-                } else if (status.status === 'completed') {
-                    teacherPageTitle.textContent = 'Attendance Complete';
-                    attendanceForm.classList.add('hidden');
-                    teacherStatusMessage.classList.remove('hidden');
+                    submitAttendanceBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    submitAttendanceBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
 
-                    // Add new styles for "completed"
+                    // Hide student attendance form during Check-Out
+                    if (teacherStudentsList) teacherStudentsList.classList.add('hidden');
+
+                } else if (status.status === 'completed') {
+                    // This block might not be reached often now due to backend change, but kept for safety
+                    teacherPageTitle.textContent = 'Session Completed';
+                    teacherStatusMessage.classList.remove('hidden');
+                    attendanceForm.classList.remove('hidden'); // Allow new check-in? 
+                    // Actually, if it returns 'completed', it means we are DONE for the day (old logic). 
+                    // But with new logic, it returns 'not_checked_in'. 
+                    // If we ever get here, let's treat it as "Ready for next check-in" or "Done".
+                    // But for now, let's assume 'not_checked_in' handles the "new session" case.
+
+                    // If we strictly follow "Multi Check In", 'completed' status from backend (if any) should probably allow Check In.
+                    // But my backend change returns 'not_checked_in' if last session is completed.
+                    // So this block is legacy or for specific cases.
+
                     teacherStatusMessage.classList.add('bg-blue-50', 'border', 'border-blue-200', 'p-6', 'rounded-lg', 'flex', 'flex-col', 'sm:flex-row', 'items-center', 'gap-4');
                     teacherStatusHeading.innerHTML = `
-                        <svg class="w-8 h-8 text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
-                        <span class="text-xl font-semibold text-blue-800">Session Complete!</span>`;
+                        <svg class="w-8 h-8 text-blue-600 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                        <span class="text-xl font-semibold text-blue-800">Session Completed</span>`;
 
-                    const checkOutTime = status.check_out_time;
-                    teacherStatusDetails.textContent = `You checked out at: ${new Date(checkOutTime).toLocaleTimeString()}`;
-                    teacherStatusDetails.classList.add('text-blue-700', 'mt-1', 'sm:mt-0', 'sm:ml-auto');
+                    teacherStatusDetails.innerHTML = `
+                        <span>In: ${new Date(status.check_in_time).toLocaleTimeString()}</span>
+                        <span class="mx-2">•</span>
+                        <span>Out: ${new Date(status.check_out_time).toLocaleTimeString()}</span>
+                    `;
+                    teacherStatusDetails.classList.add('text-blue-700', 'font-medium', 'mt-1', 'sm:mt-0');
+
+                    // Allow new check-in
+                    submitAttendanceBtn.textContent = 'Start New Session';
+                    submitAttendanceBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                    submitAttendanceBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+
+                    // Hide student attendance form
+                    if (teacherStudentsList) teacherStudentsList.classList.add('hidden');
                 } else {
                     console.error("Unknown attendance status received:", status);
                     teacherPageTitle.textContent = 'Live Attendance';
@@ -2308,12 +2794,7 @@
                 roleSelection.classList.remove('hidden');
             });
 
-            tabs.forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    switchTab(tab.id);
-                });
-            });
+
 
             addTeacherBtn.addEventListener('click', () => {
                 resetTeacherModal();
@@ -2321,14 +2802,176 @@
                 teacherModal.classList.remove('hidden');
             });
 
-            addStudentBtn.addEventListener('click', () => {
-                editModeStudentId = null;
-                studentModalTitle.textContent = 'Add New Student';
-                saveStudentBtn.textContent = 'Save Student';
-                addStudentForm.reset();
-                populateVillageDropdown(studentVillageSelect);
-                studentModal.classList.remove('hidden');
-            });
+            // --- Student Roster Buttons ---
+
+            // Manual Entry
+            const addStudentManualBtn = document.getElementById('add-student-manual-btn');
+            if (addStudentManualBtn) {
+                addStudentManualBtn.addEventListener('click', () => {
+                    editModeStudentId = null;
+                    studentModalTitle.textContent = 'Add New Student';
+                    saveStudentBtn.textContent = 'Save Student';
+                    addStudentForm.reset();
+                    populateVillageDropdown(studentVillageSelect);
+                    studentModal.classList.remove('hidden');
+                });
+            }
+
+            // CSV Upload Modal Open
+            const addStudentCsvBtn = document.getElementById('add-student-csv-btn');
+            const csvUploadModal = document.getElementById('csv-upload-modal');
+            const closeCsvModalBtn = document.getElementById('close-csv-modal-btn');
+            const csvVillageSelect = document.getElementById('csv-village-select');
+            const csvUploadForm = document.getElementById('csv-upload-form');
+            const csvFileInput = document.getElementById('csv-file-input');
+            const csvFileNameDisplay = document.getElementById('csv-file-name');
+            const submitCsvBtn = document.getElementById('submit-csv-btn');
+
+            if (addStudentCsvBtn) {
+                addStudentCsvBtn.addEventListener('click', () => {
+                    csvUploadForm.reset();
+                    csvFileNameDisplay.textContent = '';
+                    populateVillageDropdown(csvVillageSelect);
+                    csvUploadModal.classList.remove('hidden');
+                });
+            }
+
+            if (closeCsvModalBtn) {
+                closeCsvModalBtn.addEventListener('click', () => {
+                    csvUploadModal.classList.add('hidden');
+                });
+            }
+
+            // CSV File Input Change
+            // CSV File Input Change
+            if (csvFileInput) {
+                csvFileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        csvFileNameDisplay.textContent = e.target.files[0].name;
+                    } else {
+                        csvFileNameDisplay.textContent = '';
+                    }
+                });
+            }
+
+            // CSV Drop Zone Logic
+            const csvDropZone = document.getElementById('csv-drop-zone');
+            if (csvDropZone && csvFileInput) {
+                // Click to open file dialog
+                csvDropZone.addEventListener('click', () => {
+                    csvFileInput.click();
+                });
+
+                // Drag and Drop Visual Feedback
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    csvDropZone.addEventListener(eventName, preventDefaults, false);
+                });
+
+                function preventDefaults(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    csvDropZone.addEventListener(eventName, highlight, false);
+                });
+
+                ['dragleave', 'drop'].forEach(eventName => {
+                    csvDropZone.addEventListener(eventName, unhighlight, false);
+                });
+
+                function highlight(e) {
+                    csvDropZone.classList.add('bg-gray-50', 'border-slate-400');
+                }
+
+                function unhighlight(e) {
+                    csvDropZone.classList.remove('bg-gray-50', 'border-slate-400');
+                }
+
+                csvDropZone.addEventListener('drop', handleDrop, false);
+
+                function handleDrop(e) {
+                    const dt = e.dataTransfer;
+                    const files = dt.files;
+                    csvFileInput.files = files;
+
+                    // Trigger change event manually
+                    const event = new Event('change');
+                    csvFileInput.dispatchEvent(event);
+                }
+            }
+
+            // CSV Form Submit
+            if (csvUploadForm) {
+                csvUploadForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(csvUploadForm);
+                    const token = sessionStorage.getItem('adminToken');
+
+                    // Show loading state
+                    submitCsvBtn.disabled = true;
+                    const originalText = submitCsvBtn.innerHTML;
+                    submitCsvBtn.innerHTML = `
+                        <svg class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Uploading...`;
+
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/students/upload-csv`, {
+                            method: 'POST',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: formData
+                        });
+
+                        const result = await response.json();
+
+                        if (!response.ok) {
+                            throw new Error(result.error || 'Upload failed');
+                        }
+
+                        let msg = result.message;
+                        if (result.errors && result.errors.length > 0) {
+                            msg += ` (with ${result.errors.length} errors)`;
+                            console.warn('CSV Errors:', result.errors);
+                            alert(`Upload completed with warnings:\n${result.errors.slice(0, 5).join('\n')}${result.errors.length > 5 ? '\n...' : ''}`);
+                        } else {
+                            showToast(msg);
+                        }
+
+                        csvUploadModal.classList.add('hidden');
+                        fetchStudents(); // Refresh list
+
+                    } catch (error) {
+                        showToast(error.message, true);
+                    } finally {
+                        submitCsvBtn.disabled = false;
+                        submitCsvBtn.innerHTML = originalText;
+                    }
+                });
+            }
+
+            // Download Template
+            const downloadTemplateBtn = document.getElementById('download-template-btn');
+            if (downloadTemplateBtn) {
+                downloadTemplateBtn.addEventListener('click', () => {
+                    const csvContent = "data:text/csv;charset=utf-8,"
+                        + "first_name,last_name,age,gender,date_of_birth,guardian_name,guardian_phone,guardian_email,address,admission_date,admission_number,status,notes\n"
+                        + "John,Doe,10,Male,2015-01-01,Jane Doe,1234567890,jane@example.com,123 Village St,2023-01-01,ADM001,Active,Sample student";
+                    const encodedUri = encodeURI(csvContent);
+                    const link = document.createElement("a");
+                    link.setAttribute("href", encodedUri);
+                    link.setAttribute("download", "student_template.csv");
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                });
+            }
+
+
 
             cancelStudentBtn.addEventListener('click', () => {
                 studentModal.classList.add('hidden');
@@ -2372,7 +3015,16 @@
                     editModeStudentId = target.dataset.id;
                     addStudentForm.elements.first_name.value = target.dataset.firstName;
                     addStudentForm.elements.last_name.value = target.dataset.lastName;
-                    addStudentForm.elements.age.value = target.dataset.age;
+                    addStudentForm.elements.gender.value = target.dataset.gender;
+                    addStudentForm.elements.date_of_birth.value = target.dataset.dob;
+                    addStudentForm.elements.guardian_name.value = target.dataset.guardianName;
+                    addStudentForm.elements.guardian_phone.value = target.dataset.guardianPhone;
+                    addStudentForm.elements.guardian_email.value = target.dataset.guardianEmail;
+                    addStudentForm.elements.address.value = target.dataset.address;
+                    addStudentForm.elements.admission_date.value = target.dataset.admissionDate;
+                    addStudentForm.elements.admission_number.value = target.dataset.admissionNumber;
+                    addStudentForm.elements.status.value = target.dataset.status;
+                    addStudentForm.elements.notes.value = target.dataset.notes;
 
                     populateVillageDropdown(studentVillageSelect).then(() => {
                         if (target.dataset.villageId) {
@@ -2390,8 +3042,19 @@
                     const age = target.dataset.age;
 
                     studentDetailsName.textContent = name;
-                    studentDetailsVillage.textContent = village;
-                    studentDetailsAge.textContent = age;
+                    document.getElementById('student-details-village').textContent = village;
+                    document.getElementById('student-details-age').textContent = age;
+
+                    document.getElementById('student-details-gender').textContent = target.dataset.gender || '--';
+                    document.getElementById('student-details-dob').textContent = target.dataset.dob || '--';
+                    document.getElementById('student-details-guardian-name').textContent = target.dataset.guardianName || '--';
+                    document.getElementById('student-details-guardian-phone').textContent = target.dataset.guardianPhone || '--';
+                    document.getElementById('student-details-guardian-email').textContent = target.dataset.guardianEmail || '--';
+                    document.getElementById('student-details-address').textContent = target.dataset.address || '--';
+                    document.getElementById('student-details-admission-date').textContent = target.dataset.admissionDate || '--';
+                    document.getElementById('student-details-admission-no').textContent = target.dataset.admissionNumber || '--';
+                    document.getElementById('student-details-status').textContent = target.dataset.status || '--';
+                    document.getElementById('student-details-notes').textContent = target.dataset.notes || '--';
 
                     studentDetailsModal.classList.remove('hidden');
                     window.showStudentDetails(studentId);
@@ -2464,9 +3127,19 @@
                     showConfirmModal(target.dataset.teacherId, target.dataset.teacherName, 'teacher');
                 } else if (target.classList.contains('edit-teacher-btn')) {
                     editModeTeacherId = target.dataset.id;
-                    addTeacherForm.elements.name.value = target.dataset.name;
+                    addTeacherForm.elements.first_name.value = target.dataset.firstName;
+                    addTeacherForm.elements.last_name.value = target.dataset.lastName;
                     addTeacherForm.elements.email.value = target.dataset.email;
-                    addTeacherForm.elements.employee_code.value = target.dataset.code;
+                    addTeacherForm.elements.phone.value = target.dataset.phone;
+                    addTeacherForm.elements.gender.value = target.dataset.gender;
+                    addTeacherForm.elements.date_of_birth.value = target.dataset.dob;
+                    addTeacherForm.elements.qualification.value = target.dataset.qualification;
+                    addTeacherForm.elements.primary_subject.value = target.dataset.primarySubject;
+                    addTeacherForm.elements.hire_date.value = target.dataset.hireDate;
+                    addTeacherForm.elements.employment_status.value = target.dataset.employmentStatus;
+                    addTeacherForm.elements.address.value = target.dataset.address;
+                    addTeacherForm.elements.latitude.value = target.dataset.latitude;
+                    addTeacherForm.elements.longitude.value = target.dataset.longitude;
 
                     // Handle password field for edit mode
                     passwordFieldContainer.classList.add('hidden');
@@ -2490,8 +3163,17 @@
 
                     teacherDetailsName.textContent = name;
                     teacherDetailsEmail.textContent = email;
-                    teacherDetailsCode.textContent = code;
+                    document.getElementById('teacher-details-id').textContent = teacherId;
                     teacherDetailsVillage.textContent = village;
+
+                    document.getElementById('teacher-details-phone').textContent = target.dataset.phone || '--';
+                    document.getElementById('teacher-details-gender').textContent = target.dataset.gender || '--';
+                    document.getElementById('teacher-details-dob').textContent = target.dataset.dob || '--';
+                    document.getElementById('teacher-details-qualification').textContent = target.dataset.qualification || '--';
+                    document.getElementById('teacher-details-subject').textContent = target.dataset.primarySubject || '--';
+                    document.getElementById('teacher-details-status').textContent = target.dataset.employmentStatus || '--';
+                    document.getElementById('teacher-details-hire-date').textContent = target.dataset.hireDate || '--';
+                    document.getElementById('teacher-details-address').textContent = target.dataset.address || '--';
 
                     teacherDetailsModal.classList.remove('hidden');
                     window.fetchTeacherAttendanceHistory(teacherId);
@@ -2531,7 +3213,20 @@
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.error || 'Failed to save teacher');
 
-                    showToast(`Teacher ${isEditMode ? 'updated' : 'added'} successfully!`);
+                    // Auto-copy credentials for new teachers
+                    if (!isEditMode && result.teacherId && data.password) {
+                        const credentials = `Teacher ID: ${result.teacherId}\nPassword: ${data.password}`;
+                        try {
+                            await navigator.clipboard.writeText(credentials);
+                            showToast(`Teacher added! Credentials copied to clipboard.`);
+                        } catch (err) {
+                            console.error('Failed to copy credentials', err);
+                            showToast(`Teacher added! (Copy failed: ID ${result.teacherId})`);
+                        }
+                    } else {
+                        showToast(`Teacher ${isEditMode ? 'updated' : 'added'} successfully!`);
+                    }
+
                     teacherModal.classList.add('hidden');
                     resetTeacherModal();
                     fetchTeachersForAdmin();
@@ -2566,11 +3261,47 @@
                 submitAttendanceBtn.textContent = 'Submitting...';
 
                 try {
+                    // 1. Submit Teacher Attendance (Check-In or Check-Out)
                     const response = await fetch(`${API_BASE_URL}/attendance`, { method: 'POST', body: formData });
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.error || 'Failed to mark attendance');
 
-                    showToast('Attendance marked successfully!');
+                    // 2. If Check-In, ALSO Submit Student Attendance
+                    if (currentTeacherSession && currentTeacherSession.status === 'not_checked_in' || (currentTeacherSession && currentTeacherSession.last_session_completed)) {
+                        // We assume 'result' contains the new attendanceId/session_id
+                        const newSessionId = result.attendanceId;
+
+                        const checkboxes = document.querySelectorAll('input[name="student_attendance"]');
+                        if (checkboxes.length > 0) {
+                            const attendanceData = Array.from(checkboxes).map(cb => ({
+                                student_id: cb.value,
+                                status: cb.checked ? 'present' : 'absent'
+                            }));
+
+                            const studentResponse = await fetch(`${API_BASE_URL}/attendance/students`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    teacher_id: loggedInTeacher.id,
+                                    date: new Date().toISOString().slice(0, 10),
+                                    session_id: newSessionId,
+                                    attendanceData
+                                }),
+                            });
+
+                            if (!studentResponse.ok) {
+                                console.warn('Teacher check-in succeeded but student attendance failed.');
+                                showToast('Teacher check-in saved, but student attendance failed.', true);
+                            } else {
+                                showToast('Attendance marked successfully (Teacher & Students)!');
+                            }
+                        } else {
+                            showToast('Attendance marked successfully!');
+                        }
+                    } else {
+                        showToast('Attendance marked successfully!');
+                    }
+
                     fetchTeacherAttendanceStatus(loggedInTeacher.id);
 
                 } catch (error) {
@@ -2642,6 +3373,76 @@
 
 
             // --- App Initialization ---
+
+            // --- Burger Menu & Tab Logic (Moved to Init) ---
+            const burgerMenuBtn = document.getElementById('burger-menu-btn');
+            const burgerMenuDropdown = document.getElementById('burger-menu-dropdown');
+
+            if (burgerMenuBtn && burgerMenuDropdown) {
+                burgerMenuBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    burgerMenuDropdown.classList.toggle('hidden');
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!burgerMenuBtn.contains(e.target) && !burgerMenuDropdown.contains(e.target)) {
+                        burgerMenuDropdown.classList.add('hidden');
+                    }
+                });
+            }
+
+            const tabs = {
+                'tab-dashboard': 'page-dashboard',
+                'tab-villages': 'page-villages',
+                'tab-teachers': 'page-teachers',
+                'tab-students': 'page-students',
+                'tab-reports': 'page-reports'
+            };
+
+            Object.keys(tabs).forEach(tabId => {
+                const tabEl = document.getElementById(tabId);
+                if (tabEl) {
+                    tabEl.addEventListener('click', (e) => {
+                        e.preventDefault();
+
+                        // Close burger menu on selection
+                        if (burgerMenuDropdown) burgerMenuDropdown.classList.add('hidden');
+
+                        // Update active state
+                        document.querySelectorAll('.tab-link').forEach(el => {
+                            el.classList.remove('active', 'bg-slate-50', 'text-slate-900');
+                            el.classList.add('text-slate-700');
+                        });
+
+                        // Highlight all instances of this tab
+                        document.querySelectorAll(`#${tabId}`).forEach(el => {
+                            el.classList.add('active', 'bg-slate-50', 'text-slate-900');
+                            el.classList.remove('text-slate-700');
+                        });
+
+                        // Show page
+                        document.querySelectorAll('.page').forEach(page => page.classList.remove('page-active'));
+                        document.getElementById(tabs[tabId]).classList.add('page-active');
+
+                        // Specific page loads
+                        if (tabId === 'tab-dashboard') fetchDashboardStats();
+                        if (tabId === 'tab-villages') fetchVillages();
+                        if (tabId === 'tab-teachers') fetchTeachersForAdmin();
+                        if (tabId === 'tab-students') fetchStudents();
+                        if (tabId === 'tab-reports') {
+                            const today = new Date().toISOString().split('T')[0];
+                            const startDateInput = document.getElementById('report-start-date');
+                            const endDateInput = document.getElementById('report-end-date');
+                            if (startDateInput && endDateInput) {
+                                startDateInput.value = today;
+                                endDateInput.value = today;
+                                fetchReports();
+                            }
+                        }
+                    });
+                }
+            });
+
             // --- Reports Center Logic ---
             let currentReportType = 'teacher';
 
@@ -2663,16 +3464,16 @@
             function setReportType(type) {
                 currentReportType = type;
                 if (type === 'teacher') {
-                    reportTypeTeacherBtn.classList.add('bg-indigo-50', 'text-indigo-600', 'shadow-sm', 'ring-1', 'ring-indigo-100', 'font-bold');
+                    reportTypeTeacherBtn.classList.add('bg-slate-100', 'text-slate-900', 'shadow-sm', 'ring-1', 'ring-slate-200', 'font-bold');
                     reportTypeTeacherBtn.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:bg-gray-50', 'font-medium');
 
-                    reportTypeStudentBtn.classList.remove('bg-indigo-50', 'text-indigo-600', 'shadow-sm', 'ring-1', 'ring-indigo-100', 'font-bold');
+                    reportTypeStudentBtn.classList.remove('bg-slate-100', 'text-slate-900', 'shadow-sm', 'ring-1', 'ring-slate-200', 'font-bold');
                     reportTypeStudentBtn.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:bg-gray-50', 'font-medium');
                 } else {
-                    reportTypeStudentBtn.classList.add('bg-indigo-50', 'text-indigo-600', 'shadow-sm', 'ring-1', 'ring-indigo-100', 'font-bold');
+                    reportTypeStudentBtn.classList.add('bg-slate-100', 'text-slate-900', 'shadow-sm', 'ring-1', 'ring-slate-200', 'font-bold');
                     reportTypeStudentBtn.classList.remove('text-gray-500', 'hover:text-gray-700', 'hover:bg-gray-50', 'font-medium');
 
-                    reportTypeTeacherBtn.classList.remove('bg-indigo-50', 'text-indigo-600', 'shadow-sm', 'ring-1', 'ring-indigo-100', 'font-bold');
+                    reportTypeTeacherBtn.classList.remove('bg-slate-100', 'text-slate-900', 'shadow-sm', 'ring-1', 'ring-slate-200', 'font-bold');
                     reportTypeTeacherBtn.classList.add('text-gray-500', 'hover:text-gray-700', 'hover:bg-gray-50', 'font-medium');
                 }
                 fetchReports(); // Auto-fetch on type change
@@ -2707,66 +3508,20 @@
                         renderReportTable(result.data);
 
                     } else {
-                        // Client-side aggregation for Students (Robust fallback)
-                        const token = sessionStorage.getItem('adminToken');
-                        let studentsUrl = `${API_BASE_URL}/students`;
-                        if (villageId) studentsUrl += `?village_id=${villageId}`;
+                        // Server-side fetching for Students
+                        let url = `${API_BASE_URL}/attendance/report/students?startDate=${startDate}&endDate=${endDate}`;
+                        if (villageId) url += `&village_id=${villageId}`;
 
-                        const studentsResp = await fetch(studentsUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+                        const response = await fetch(url);
+                        const result = await response.json();
 
-                        if (studentsResp.status === 401) {
-                            alert('Session expired. Please login again.');
-                            adminLogoutBtn.click(); // Trigger logout
-                            return;
-                        }
+                        if (!response.ok) throw new Error(result.error || 'Failed to fetch report');
 
-                        if (!studentsResp.ok) {
-                            const err = await studentsResp.json();
-                            throw new Error(err.error || 'Failed to fetch students list');
-                        }
-                        const students = await studentsResp.json();
-
-                        const reportData = [];
-
-                        // Fetch attendance for each student in parallel
-                        await Promise.all(students.map(async (student) => {
-                            try {
-                                const attResp = await fetch(`${API_BASE_URL}/students/${student.id}/attendance`, { headers: { 'Authorization': `Bearer ${token}` } });
-                                if (attResp.ok) {
-                                    const history = await attResp.json();
-                                    history.forEach(record => {
-                                        // Fix: Use local date to avoid timezone issues (e.g. UTC shifting date back by 1 day)
-                                        const d = new Date(record.date);
-                                        const year = d.getFullYear();
-                                        const month = String(d.getMonth() + 1).padStart(2, '0');
-                                        const day = String(d.getDate()).padStart(2, '0');
-                                        const recordDate = `${year}-${month}-${day}`;
-
-                                        if (recordDate >= startDate && recordDate <= endDate) {
-                                            reportData.push({
-                                                date: record.date,
-                                                first_name: student.first_name,
-                                                last_name: student.last_name,
-                                                village_name: student.village_name,
-                                                status: record.status,
-                                                marked_by_teacher: record.teacher_name
-                                            });
-                                        }
-                                    });
-                                }
-                            } catch (e) {
-                                console.warn(`Failed to fetch history for student ${student.id}`, e);
-                            }
-                        }));
-
-                        // Sort by date descending
-                        reportData.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-                        if (reportData.length === 0) {
+                        if (result.data.length === 0) {
                             reportResultsEl.innerHTML = `<div class="p-8 text-center text-gray-500">No records found for the selected criteria.</div>`;
                             return;
                         }
-                        renderReportTable(reportData);
+                        renderReportTable(result.data);
                     }
 
                 } catch (error) {
@@ -2799,9 +3554,11 @@
                                         ${r.check_out_time ? new Date(r.check_out_time).toLocaleTimeString() : 'Active'}
                                     </td>
                                     <td class="px-6 py-4">
-                                        <div class="flex gap-2">
-                                            <a href="${API_BASE_URL}${r.check_in_photo_url1}" target="_blank" class="text-xs text-indigo-600 hover:underline">In 1</a>
-                                            ${r.check_out_photo_url1 ? `<a href="${API_BASE_URL}${r.check_out_photo_url1}" target="_blank" class="text-xs text-indigo-600 hover:underline">Out 1</a>` : ''}
+                                        <div class="flex gap-2 flex-wrap">
+                                            ${r.check_in_photo_url1 ? `<a href="${API_BASE_URL}${r.check_in_photo_url1}" target="_blank" class="text-xs text-slate-900 hover:underline">In 1</a>` : ''}
+                                            ${r.check_in_photo_url2 ? `<a href="${API_BASE_URL}${r.check_in_photo_url2}" target="_blank" class="text-xs text-slate-900 hover:underline">In 2</a>` : ''}
+                                            ${r.check_out_photo_url1 ? `<a href="${API_BASE_URL}${r.check_out_photo_url1}" target="_blank" class="text-xs text-slate-900 hover:underline">Out 1</a>` : ''}
+                                            ${r.check_out_photo_url2 ? `<a href="${API_BASE_URL}${r.check_out_photo_url2}" target="_blank" class="text-xs text-slate-900 hover:underline">Out 2</a>` : ''}
                                         </div>
                                     </td>
                                 </tr>`).join('')}
@@ -2813,6 +3570,7 @@
                             <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3">Date</th>
+                                    <th class="px-6 py-3">Time</th>
                                     <th class="px-6 py-3">Student</th>
                                     <th class="px-6 py-3">Village</th>
                                     <th class="px-6 py-3">Status</th>
@@ -2823,6 +3581,10 @@
                                 ${data.map(r => `
                                 <tr class="bg-white border-b hover:bg-gray-50">
                                     <td class="px-6 py-4">${new Date(r.date).toLocaleDateString()}</td>
+                                    <td class="px-6 py-4 text-gray-600">
+                                        ${r.created_at ? new Date(r.created_at).toLocaleTimeString() : '-'}
+                                        ${r.session_id ? `<div class="text-xs text-gray-400">Session #${r.session_id}</div>` : ''}
+                                    </td>
                                     <td class="px-6 py-4 font-medium text-gray-900">${r.first_name} ${r.last_name}</td>
                                     <td class="px-6 py-4">${r.village_name || '-'}</td>
                                     <td class="px-6 py-4">
@@ -2984,7 +3746,9 @@
                                 </tbody>
                             </table>
                         </div>
-                        <button type="submit" id="save-student-attendance-btn" class="w-full bg-slate-900 text-white py-3 rounded-lg font-bold shadow-sm hover:bg-slate-800 transition-all text-sm flex items-center justify-center gap-2">
+                        </div>
+                        <!-- Hidden submit button, handled by main check-in -->
+                        <button type="submit" id="save-student-attendance-btn" class="hidden w-full bg-slate-900 text-white py-3 rounded-lg font-bold shadow-sm hover:bg-slate-800 transition-all text-sm flex items-center justify-center gap-2">
                             <svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                               <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                             </svg>
@@ -3014,25 +3778,25 @@
                         Saving...`;
 
                         const checkboxes = document.querySelectorAll('input[name="student_attendance"]');
-                        const attendanceData = [];
+                        const attendanceData = Array.from(checkboxes).map(cb => ({
+                            student_id: cb.value,
+                            status: cb.checked ? 'present' : 'absent'
+                        }));
 
-                        // Iterate over all students displayed (we use the students array to ensure we capture everyone)
-                        students.forEach(s => {
-                            // Find the checkbox for this student
-                            const checkbox = document.querySelector(`input[value="${s.id}"]`);
-                            const status = checkbox && checkbox.checked ? 'present' : 'absent';
-                            attendanceData.push({ student_id: s.id, status });
-                        });
+                        const loggedInTeacher = JSON.parse(sessionStorage.getItem('loggedInTeacher'));
+                        // Use the current session ID if available
+                        const sessionId = currentTeacherSession ? currentTeacherSession.id : null;
 
                         try {
                             const response = await fetch(`${API_BASE_URL}/attendance/students`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({
-                                    teacher_id: teacherId,
-                                    date: today,
+                                    teacher_id: loggedInTeacher.id,
+                                    date: new Date().toISOString().slice(0, 10),
+                                    session_id: sessionId,
                                     attendanceData
-                                })
+                                }),
                             });
 
                             const result = await response.json();

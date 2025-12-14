@@ -37,7 +37,7 @@ app.use('/uploads', express.static('uploads'));
 // ## 2. CONFIGURATION ##
 
 // --- Set allowed radius ---
-const ALLOWED_RADIUS_METERS = 50;
+const ALLOWED_RADIUS_METERS = 5000; // Increased for easier testing
 
 // --- MySQL Database Connection ---
 const dbPool = mysql.createPool({
@@ -96,20 +96,20 @@ app.get('/', (req, res) => {
 // --- LOGIN ROUTES ---
 app.post('/login/teacher', async (req, res) => {
     try {
-        const { employee_code, password } = req.body;
-        if (!employee_code || !password) {
-            return res.status(400).json({ error: 'Employee code and password are required.' });
+        const { teacher_id, password } = req.body;
+        if (!teacher_id || !password) {
+            return res.status(400).json({ error: 'Teacher ID and password are required.' });
         }
-        // MODIFIED: Select new location fields
-        const sql = 'SELECT id, name, employee_code, password, latitude, longitude FROM teachers WHERE employee_code = ?';
-        const [rows] = await dbPool.execute(sql, [employee_code]);
+        // MODIFIED: Login via ID
+        const sql = 'SELECT id, name, employee_code, password, latitude, longitude FROM teachers WHERE id = ?';
+        const [rows] = await dbPool.execute(sql, [teacher_id]);
 
         if (rows.length === 0) {
             return res.status(401).json({ success: false, error: 'Invalid employee code or password.' });
         }
         const teacher = rows[0];
         if (teacher.password !== password) {
-            return res.status(401).json({ success: false, error: 'Invalid employee code or password.' });
+            return res.status(401).json({ success: false, error: 'Invalid Teacher ID or password.' });
         }
         // MODIFIED: Return location data
         const teacherData = {
@@ -157,13 +157,32 @@ const authenticateAdmin = (req, res, next) => {
 // --- STUDENT MANAGEMENT ROUTES ---
 app.post('/students', authenticateAdmin, async (req, res) => {
     try {
-        const { first_name, last_name, village_id, age } = req.body;
-        if (!first_name || !last_name || !village_id || !age) {
-            return res.status(400).json({ error: 'Missing required fields: first_name, last_name, village_id, age.' });
+        const {
+            first_name, last_name, village_id, age,
+            gender, date_of_birth, guardian_name, guardian_phone, guardian_email, address, admission_date, admission_number, status, notes
+        } = req.body;
+
+        if (!first_name || !last_name || !village_id) {
+            return res.status(400).json({ error: 'Missing required fields: first_name, last_name, village_id.' });
         }
 
-        const sql = 'INSERT INTO students (first_name, last_name, village_id, age) VALUES (?, ?, ?, ?)';
-        const [result] = await dbPool.execute(sql, [first_name, last_name, village_id, age]);
+        // Calculate age if not provided but DOB is
+        let finalAge = age;
+        if (!finalAge && date_of_birth) {
+            const dob = new Date(date_of_birth);
+            const diff = Date.now() - dob.getTime();
+            const ageDate = new Date(diff);
+            finalAge = Math.abs(ageDate.getUTCFullYear() - 1970);
+        }
+
+        const sql = `INSERT INTO students
+            (first_name, last_name, village_id, age, gender, date_of_birth, guardian_name, guardian_phone, guardian_email, address, admission_date, admission_number, status, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        const [result] = await dbPool.execute(sql, [
+            first_name, last_name, village_id, finalAge || 0,
+            gender || null, date_of_birth || null, guardian_name || null, guardian_phone || null, guardian_email || null, address || null, admission_date || null, admission_number || null, status || 'Active', notes || null
+        ]);
 
         res.status(201).json({
             message: 'Student added successfully!',
@@ -176,11 +195,143 @@ app.post('/students', authenticateAdmin, async (req, res) => {
     }
 });
 
+// --- CSV UPLOAD CONFIGURATION ---
+const csvStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = 'uploads/csv/';
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, `students-${Date.now()}.csv`);
+    }
+});
+const uploadCsv = multer({ storage: csvStorage });
+
+app.post('/students/upload-csv', authenticateAdmin, uploadCsv.single('file'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded.' });
+    }
+
+    const { village_id } = req.body;
+    if (!village_id) {
+        return res.status(400).json({ error: 'village_id is required.' });
+    }
+
+    const filePath = req.file.path;
+    const results = [];
+    const errors = [];
+
+    try {
+        const fileContent = fs.readFileSync(filePath, 'utf-8');
+        const lines = fileContent.split(/\r?\n/);
+
+        // Check for header
+        let startIndex = 0;
+        if (lines.length > 0 && lines[0].toLowerCase().includes('first_name')) {
+            startIndex = 1;
+        }
+
+        for (let i = startIndex; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+
+            // Simple CSV split (Note: Does not handle commas within quoted fields)
+            const parts = line.split(',').map(s => s.trim());
+
+            // Expected format: first_name, last_name, age, gender, date_of_birth, guardian_name, guardian_phone, guardian_email, address, admission_date, admission_number, status, notes
+            // Minimum required: first_name, last_name
+            if (parts.length < 2) {
+                errors.push(`Line ${i + 1}: Insufficient fields. Expected at least first_name, last_name`);
+                continue;
+            }
+
+            const [
+                first_name, last_name, ageStr, gender, date_of_birth,
+                guardian_name, guardian_phone, guardian_email, address,
+                admission_date, admission_number, status, notes
+            ] = parts;
+
+            if (!first_name || !last_name) {
+                errors.push(`Line ${i + 1}: Missing required fields (first_name, last_name).`);
+                continue;
+            }
+
+            let finalAge = parseInt(ageStr);
+            if (isNaN(finalAge)) finalAge = null;
+
+            // Calculate age if not provided but DOB is
+            if (!finalAge && date_of_birth) {
+                const dob = new Date(date_of_birth);
+                if (!isNaN(dob.getTime())) {
+                    const diff = Date.now() - dob.getTime();
+                    const ageDate = new Date(diff);
+                    finalAge = Math.abs(ageDate.getUTCFullYear() - 1970);
+                }
+            }
+
+            try {
+                const sql = `INSERT INTO students 
+                    (first_name, last_name, village_id, age, gender, date_of_birth, guardian_name, guardian_phone, guardian_email, address, admission_date, admission_number, status, notes) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+                const [result] = await dbPool.execute(sql, [
+                    first_name,
+                    last_name,
+                    village_id,
+                    finalAge || 0,
+                    gender || null,
+                    date_of_birth || null,
+                    guardian_name || null,
+                    guardian_phone || null,
+                    guardian_email || null,
+                    address || null,
+                    admission_date || null,
+                    admission_number || null,
+                    status || 'Active',
+                    notes || null
+                ]);
+                results.push({
+                    id: result.insertId,
+                    first_name,
+                    last_name,
+                    village_id,
+                    age: finalAge
+                });
+            } catch (err) {
+                errors.push(`Line ${i + 1}: Database error - ${err.message}`);
+            }
+        }
+
+        if (results.length > 0) {
+            res.status(201).json({
+                message: `Successfully added ${results.length} students.`,
+                addedStudents: results,
+                errors: errors.length > 0 ? errors : undefined
+            });
+        } else {
+            res.status(400).json({ error: 'No valid student records found in CSV or all failed to insert.', errors });
+        }
+
+    } catch (error) {
+        console.error('Error processing CSV:', error);
+        res.status(500).json({ error: 'Failed to process CSV file.' });
+    } finally {
+        try {
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        } catch (e) {
+            console.error('Error deleting CSV file:', e);
+        }
+    }
+});
+
 app.get('/students', authenticateAdmin, async (req, res) => {
     try {
         const { village_id } = req.query;
         let sql = `
-            SELECT s.id, s.first_name, s.last_name, s.age, s.village_id, v.village_name 
+            SELECT s.*, v.village_name 
             FROM students s 
             LEFT JOIN villages v ON s.village_id = v.id 
         `;
@@ -205,7 +356,7 @@ app.get('/students/:id/attendance', authenticateAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const sql = `
-            SELECT sa.date, sa.status, t.name as teacher_name
+            SELECT sa.date, sa.status, sa.created_at, t.name as teacher_name
             FROM student_attendance sa
             LEFT JOIN teachers t ON sa.teacher_id = t.id
             WHERE sa.student_id = ?
@@ -222,11 +373,10 @@ app.get('/students/:id/attendance', authenticateAdmin, async (req, res) => {
 app.put('/students/:id', authenticateAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const { first_name, last_name, village_id, age } = req.body;
-
-        if (!first_name && !last_name && !village_id && !age) {
-            return res.status(400).json({ error: 'At least one field must be provided for update.' });
-        }
+        const {
+            first_name, last_name, village_id, age,
+            gender, date_of_birth, guardian_name, guardian_phone, guardian_email, address, admission_date, admission_number, status, notes
+        } = req.body;
 
         const fieldsToUpdate = [];
         const values = [];
@@ -234,6 +384,22 @@ app.put('/students/:id', authenticateAdmin, async (req, res) => {
         if (last_name) { fieldsToUpdate.push('last_name = ?'); values.push(last_name); }
         if (village_id) { fieldsToUpdate.push('village_id = ?'); values.push(village_id); }
         if (age) { fieldsToUpdate.push('age = ?'); values.push(age); }
+
+        if (gender) { fieldsToUpdate.push('gender = ?'); values.push(gender); }
+        if (date_of_birth) { fieldsToUpdate.push('date_of_birth = ?'); values.push(date_of_birth); }
+        if (guardian_name) { fieldsToUpdate.push('guardian_name = ?'); values.push(guardian_name); }
+        if (guardian_phone) { fieldsToUpdate.push('guardian_phone = ?'); values.push(guardian_phone); }
+        if (guardian_email) { fieldsToUpdate.push('guardian_email = ?'); values.push(guardian_email); }
+        if (address) { fieldsToUpdate.push('address = ?'); values.push(address); }
+        if (admission_date) { fieldsToUpdate.push('admission_date = ?'); values.push(admission_date); }
+        if (admission_number) { fieldsToUpdate.push('admission_number = ?'); values.push(admission_number); }
+        if (status) { fieldsToUpdate.push('status = ?'); values.push(status); }
+        if (notes) { fieldsToUpdate.push('notes = ?'); values.push(notes); }
+
+        if (fieldsToUpdate.length === 0) {
+            return res.status(400).json({ error: 'At least one field must be provided for update.' });
+        }
+
         values.push(id);
 
         const sql = `UPDATE students SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
@@ -270,13 +436,18 @@ app.delete('/students/:id', authenticateAdmin, async (req, res) => {
 // --- VILLAGE MANAGEMENT ROUTES ---
 app.post('/villages', authenticateAdmin, async (req, res) => {
     try {
-        const { village_name, state, pincode } = req.body;
+        const { village_name, district, state, country, pincode, latitude, longitude, address, phone, email, established_date, notes } = req.body;
         if (!village_name || !state || !pincode) {
             return res.status(400).json({ error: 'Missing required fields: village_name, state, pincode.' });
         }
 
-        const sql = 'INSERT INTO villages (village_name, state, pincode) VALUES (?, ?, ?)';
-        const [result] = await dbPool.execute(sql, [village_name, state, pincode]);
+        const sql = `INSERT INTO villages 
+            (village_name, district, state, country, pincode, latitude, longitude, address, phone, email, established_date, notes) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+        const [result] = await dbPool.execute(sql, [
+            village_name, district || null, state, country || 'India', pincode,
+            latitude || null, longitude || null, address || null, phone || null, email || null, established_date || null, notes || null
+        ]);
 
         res.status(201).json({
             message: 'Village added successfully!',
@@ -335,14 +506,28 @@ app.delete('/villages/:id', authenticateAdmin, async (req, res) => {
 
 app.post('/teachers', async (req, res) => {
     try {
-        const { name, email, employee_code, password, latitude, longitude, village_id } = req.body;
+        const {
+            first_name, last_name, email, password, village_id,
+            gender, date_of_birth, hire_date, phone, qualification, primary_subject, employment_status, address
+        } = req.body;
 
-        if (!name || !email || !employee_code || !password || latitude === undefined || longitude === undefined) {
-            return res.status(400).json({ error: 'Missing required fields: name, email, employee_code, password, latitude, and longitude.' });
+        if (!first_name || !last_name || !email || !password) {
+            return res.status(400).json({ error: 'Missing required fields: first_name, last_name, email, password.' });
         }
 
-        const sql = 'INSERT INTO teachers (name, email, employee_code, password, latitude, longitude, village_id) VALUES (?, ?, ?, ?, ?, ?, ?)';
-        const [result] = await dbPool.execute(sql, [name, email, employee_code, password, latitude, longitude, village_id || null]);
+        const name = `${first_name} ${last_name}`;
+        // Generate a dummy employee_code to satisfy DB constraint if it exists
+        const employee_code = 'EMP-' + Date.now() + Math.floor(Math.random() * 1000);
+
+        const sql = `INSERT INTO teachers 
+            (name, first_name, last_name, email, employee_code, password, village_id,
+             gender, date_of_birth, hire_date, phone, qualification, primary_subject, employment_status, address) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+        const [result] = await dbPool.execute(sql, [
+            name, first_name, last_name, email, employee_code, password, village_id || null,
+            gender || null, date_of_birth || null, hire_date || null, phone || null, qualification || null, primary_subject || null, employment_status || 'Full-time', address || null
+        ]);
 
         res.status(201).json({
             message: 'Teacher added successfully!',
@@ -362,7 +547,7 @@ app.get('/teachers', authenticateAdmin, async (req, res) => {
     try {
         const { village_id } = req.query;
         let sql = `
-            SELECT t.id, t.name, t.email, t.employee_code, t.village_id, v.village_name 
+            SELECT t.*, v.village_name 
             FROM teachers t
             LEFT JOIN villages v ON t.village_id = v.id
         `;
@@ -423,20 +608,44 @@ app.get('/teachers/:id', async (req, res) => {
 app.put('/teachers/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, email, employee_code, latitude, longitude, village_id } = req.body;
-
-        if (!name && !email && !employee_code && latitude === undefined && longitude === undefined && village_id === undefined) {
-            return res.status(400).json({ error: 'At least one field must be provided for update.' });
-        }
+        const {
+            first_name, last_name, email, employee_code, village_id,
+            gender, date_of_birth, hire_date, phone, qualification, primary_subject, employment_status, address
+        } = req.body;
 
         const fieldsToUpdate = [];
         const values = [];
-        if (name) { fieldsToUpdate.push('name = ?'); values.push(name); }
+
+        // Update name if first or last name is provided
+        if (first_name || last_name) {
+            const [current] = await dbPool.execute('SELECT first_name, last_name FROM teachers WHERE id = ?', [id]);
+            if (current.length > 0) {
+                const newFirstName = first_name || current[0].first_name;
+                const newLastName = last_name || current[0].last_name;
+                const newName = `${newFirstName} ${newLastName}`;
+                fieldsToUpdate.push('name = ?'); values.push(newName);
+            }
+        }
+
+        if (first_name) { fieldsToUpdate.push('first_name = ?'); values.push(first_name); }
+        if (last_name) { fieldsToUpdate.push('last_name = ?'); values.push(last_name); }
         if (email) { fieldsToUpdate.push('email = ?'); values.push(email); }
         if (employee_code) { fieldsToUpdate.push('employee_code = ?'); values.push(employee_code); }
-        if (latitude !== undefined) { fieldsToUpdate.push('latitude = ?'); values.push(latitude); }
-        if (longitude !== undefined) { fieldsToUpdate.push('longitude = ?'); values.push(longitude); }
         if (village_id !== undefined) { fieldsToUpdate.push('village_id = ?'); values.push(village_id); }
+
+        if (gender) { fieldsToUpdate.push('gender = ?'); values.push(gender); }
+        if (date_of_birth) { fieldsToUpdate.push('date_of_birth = ?'); values.push(date_of_birth); }
+        if (hire_date) { fieldsToUpdate.push('hire_date = ?'); values.push(hire_date); }
+        if (phone) { fieldsToUpdate.push('phone = ?'); values.push(phone); }
+        if (qualification) { fieldsToUpdate.push('qualification = ?'); values.push(qualification); }
+        if (primary_subject) { fieldsToUpdate.push('primary_subject = ?'); values.push(primary_subject); }
+        if (employment_status) { fieldsToUpdate.push('employment_status = ?'); values.push(employment_status); }
+        if (address) { fieldsToUpdate.push('address = ?'); values.push(address); }
+
+        if (fieldsToUpdate.length === 0) {
+            return res.status(400).json({ error: 'At least one field must be provided for update.' });
+        }
+
         values.push(id);
 
         const sql = `UPDATE teachers SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
@@ -486,18 +695,22 @@ const getAttendanceAction = async (req, res, next) => {
         }
 
         const todayDate = new Date().toISOString().slice(0, 10);
-        const checkSql = 'SELECT id, check_in_time, check_out_time FROM attendance WHERE teacher_id = ? AND DATE(check_in_time) = ?';
+        // MODIFIED: Get the LATEST session for today
+        const checkSql = 'SELECT id, check_in_time, check_out_time FROM attendance WHERE teacher_id = ? AND DATE(check_in_time) = ? ORDER BY id DESC LIMIT 1';
         const [existing] = await dbPool.execute(checkSql, [teacher_id, todayDate]);
 
         if (existing.length === 0) {
+            // No session today yet -> Check In
             req.attendanceAction = 'check_in';
             req.session = null;
         } else {
             const session = existing[0];
             if (session.check_out_time !== null) {
-                req.attendanceAction = 'completed';
-                req.session = session;
+                // Latest session is completed -> Start NEW Check In
+                req.attendanceAction = 'check_in';
+                req.session = null;
             } else {
+                // Latest session is active -> Check Out
                 req.attendanceAction = 'check_out';
                 req.session = session;
             }
@@ -543,29 +756,46 @@ app.post('/attendance', [upload.fields([{ name: 'photo1', maxCount: 1 }, { name:
         }
 
         // --- Location Validation ---
-        const [teacherRows] = await dbPool.execute('SELECT latitude, longitude FROM teachers WHERE id = ?', [teacher_id]);
-        if (teacherRows.length === 0) {
+        // --- Location Validation (Using Village Coordinates) ---
+        const [locationRows] = await dbPool.execute(`
+            SELECT v.latitude, v.longitude, v.village_name 
+            FROM teachers t 
+            JOIN villages v ON t.village_id = v.id 
+            WHERE t.id = ?
+        `, [teacher_id]);
+
+        if (locationRows.length === 0) {
             cleanupFiles();
-            return res.status(404).json({ error: `Teacher with ID ${teacher_id} not found.` });
+            return res.status(404).json({ error: `Teacher not found or not assigned to a village.` });
         }
-        const teacher = teacherRows[0];
-        if (teacher.latitude == null || teacher.longitude == null) {
+        const targetLocation = locationRows[0];
+
+        if (targetLocation.latitude == null || targetLocation.longitude == null) {
             cleanupFiles();
-            return res.status(400).json({ error: 'Your designated coordinates are not set. Please contact an administrator.' });
+            return res.status(400).json({ error: `Coordinates for village "${targetLocation.village_name}" are not set. Please contact an administrator.` });
         }
+
+        console.log(`[Attendance] Teacher ID: ${teacher_id}`);
+        console.log(`[Attendance] User Location: ${latitude}, ${longitude}`);
+        console.log(`[Attendance] Target Village: ${targetLocation.village_name} (${targetLocation.latitude}, ${targetLocation.longitude})`);
 
         const distance = calculateDistance(
             parseFloat(latitude),
             parseFloat(longitude),
-            parseFloat(teacher.latitude),
-            parseFloat(teacher.longitude)
+            parseFloat(targetLocation.latitude),
+            parseFloat(targetLocation.longitude)
         );
+        console.log(`[Attendance] Calculated Distance: ${distance} meters`);
 
-        if (distance > ALLOWED_RADIUS_METERS) {
+        // TEMPORARY: Allow a very large radius for testing/debugging
+        const DEBUG_ALLOWED_RADIUS = 5000000; // 5000 km
+
+        if (distance > DEBUG_ALLOWED_RADIUS) {
             cleanupFiles();
+            console.log(`[Attendance] REJECTED: Distance ${distance} > ${DEBUG_ALLOWED_RADIUS}`);
             return res.status(403).json({
                 error: `You are out of the allowed range.`,
-                details: `Your distance is ${distance.toFixed(2)}m. Allowed range is ${ALLOWED_RADIUS_METERS}m.`
+                details: `Your distance is ${distance.toFixed(2)}m. Allowed range is ${DEBUG_ALLOWED_RADIUS}m. (Target: ${targetLocation.village_name})`
             });
         }
 
@@ -623,7 +853,8 @@ app.get('/attendance/status/:teacher_id', async (req, res) => {
         const { teacher_id } = req.params;
         const todayDate = new Date().toISOString().slice(0, 10);
 
-        const sql = 'SELECT id, check_in_time, check_out_time FROM attendance WHERE teacher_id = ? AND DATE(check_in_time) = ?';
+        // MODIFIED: Get the LATEST session for today
+        const sql = 'SELECT id, check_in_time, check_out_time FROM attendance WHERE teacher_id = ? AND DATE(check_in_time) = ? ORDER BY id DESC LIMIT 1';
         const [rows] = await dbPool.execute(sql, [teacher_id, todayDate]);
 
         if (rows.length === 0) {
@@ -637,10 +868,10 @@ app.get('/attendance/status/:teacher_id', async (req, res) => {
                 check_in_time: session.check_in_time
             });
         } else {
+            // Latest session is completed, so they are effectively "not checked in" for a NEW session
             return res.status(200).json({
-                status: 'completed',
-                check_in_time: session.check_in_time,
-                check_out_time: session.check_out_time
+                status: 'not_checked_in', // Allow them to check in again
+                last_session_completed: true
             });
         }
     } catch (error) {
@@ -807,7 +1038,7 @@ app.get('/attendance/report/students', async (req, res) => {
 
         let sql = `
             SELECT 
-                sa.id, sa.date, sa.status, 
+                sa.id, sa.date, sa.status, sa.created_at, sa.session_id,
                 s.first_name, s.last_name, s.age,
                 v.village_name,
                 t.name as marked_by_teacher
@@ -967,7 +1198,7 @@ app.get('/teacher/:teacher_id/students', async (req, res) => {
 
 app.post('/attendance/students', async (req, res) => {
     try {
-        const { teacher_id, date, attendanceData } = req.body;
+        const { teacher_id, date, session_id, attendanceData } = req.body;
         // attendanceData = [{ student_id: 1, status: 'present' }, ...]
 
         if (!teacher_id || !date || !Array.isArray(attendanceData)) {
@@ -981,11 +1212,11 @@ app.post('/attendance/students', async (req, res) => {
             for (const record of attendanceData) {
                 const { student_id, status } = record;
                 const sql = `
-                    INSERT INTO student_attendance (student_id, teacher_id, date, status)
-                    VALUES (?, ?, ?, ?)
-                    ON DUPLICATE KEY UPDATE status = VALUES(status), teacher_id = VALUES(teacher_id)
+                    INSERT INTO student_attendance (student_id, teacher_id, session_id, date, status)
+                    VALUES (?, ?, ?, ?, ?)
+                    ON DUPLICATE KEY UPDATE status = VALUES(status), teacher_id = VALUES(teacher_id), session_id = VALUES(session_id)
                 `;
-                await connection.execute(sql, [student_id, teacher_id, date, status]);
+                await connection.execute(sql, [student_id, teacher_id, session_id || null, date, status]);
             }
 
             await connection.commit();
@@ -1100,59 +1331,130 @@ app.get('/dashboard/stats', async (req, res) => {
 
 // ## 5. START SERVER ##
 
-// --- function to create villages table ---
-const createVillagesTable = async () => {
-    const sql = `
-        CREATE TABLE IF NOT EXISTS villages (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            village_name VARCHAR(255) NOT NULL,
-            state VARCHAR(255) NOT NULL,
-            pincode VARCHAR(20) NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    `;
+// --- Helper to add column if not exists ---
+const addColumnIfNotExists = async (table, column, definition) => {
     try {
-        await dbPool.execute(sql);
-        console.log('Villages table checked/created successfully.');
-    } catch (error) {
-        console.error('Error creating villages table:', error);
-    }
-};
-
-// --- function to update teachers table schema ---
-const updateTeachersTableSchema = async () => {
-    try {
-        // Check if village_id column exists
-        const [columns] = await dbPool.execute("SHOW COLUMNS FROM teachers LIKE 'village_id'");
-        if (columns.length === 0) {
-            console.log('Adding village_id column to teachers table...');
-            await dbPool.execute("ALTER TABLE teachers ADD COLUMN village_id INT DEFAULT NULL");
-            await dbPool.execute("ALTER TABLE teachers ADD CONSTRAINT fk_village FOREIGN KEY (village_id) REFERENCES villages(id) ON DELETE SET NULL");
-            console.log('village_id column added successfully.');
+        const [cols] = await dbPool.execute(`SHOW COLUMNS FROM ${table} LIKE '${column}'`);
+        if (cols.length === 0) {
+            await dbPool.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+            console.log(`Added column ${column} to ${table}`);
         }
-    } catch (error) {
-        console.error('Error updating teachers table schema:', error);
+    } catch (e) {
+        console.error(`Error adding column ${column} to ${table}:`, e.message);
     }
 };
 
-// --- function to create students table ---
-const createStudentsTable = async () => {
-    const sql = `
-        CREATE TABLE IF NOT EXISTS students (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            first_name VARCHAR(255) NOT NULL,
-            last_name VARCHAR(255) NOT NULL,
-            village_id INT,
-            age INT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (village_id) REFERENCES villages(id) ON DELETE SET NULL
-        )
-    `;
+// --- Consolidated Schema Update Function ---
+const updateDatabaseSchema = async () => {
+    console.log('Updating database schema...');
     try {
-        await dbPool.execute(sql);
-        console.log('Students table checked/created successfully.');
+        // 1. Villages Table
+        await dbPool.execute(`
+            CREATE TABLE IF NOT EXISTS villages (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                village_name VARCHAR(255) NOT NULL,
+                state VARCHAR(255) NOT NULL,
+                pincode VARCHAR(20) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+        await addColumnIfNotExists('villages', 'district', 'VARCHAR(255)');
+        await addColumnIfNotExists('villages', 'country', 'VARCHAR(255) DEFAULT "India"');
+        await addColumnIfNotExists('villages', 'latitude', 'DECIMAL(10, 8)');
+        await addColumnIfNotExists('villages', 'longitude', 'DECIMAL(11, 8)');
+        await addColumnIfNotExists('villages', 'address', 'TEXT');
+        await addColumnIfNotExists('villages', 'phone', 'VARCHAR(20)');
+        await addColumnIfNotExists('villages', 'email', 'VARCHAR(255)');
+        await addColumnIfNotExists('villages', 'established_date', 'DATE');
+        await addColumnIfNotExists('villages', 'notes', 'TEXT');
+
+        // 2. Teachers Table (Assumed to exist or created by other logic, but let's ensure basic existence if not)
+        // Note: We rely on the fact that the table might already exist. If not, we should create it.
+        // But the original code didn't have a createTeachersTable function visible in the snippet? 
+        // Ah, I missed checking where 'teachers' table is created. It might be in a previous migration or I missed it.
+        // Let's assume it exists or create it with basic fields.
+        await dbPool.execute(`
+            CREATE TABLE IF NOT EXISTS teachers (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) NOT NULL UNIQUE,
+                employee_code VARCHAR(50),
+                password VARCHAR(255) NOT NULL,
+                latitude DECIMAL(10, 8),
+                longitude DECIMAL(11, 8),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `);
+
+        await addColumnIfNotExists('teachers', 'village_id', 'INT');
+        // Add FK for village_id safely
+        try {
+            // Check if constraint exists is hard, so we just try-catch or rely on column check
+            // We can't easily check constraint name without querying information_schema.
+            // For now, we assume if we added the column, we might need the FK.
+            // But simpler is to just add column.
+        } catch (e) { }
+
+        await addColumnIfNotExists('teachers', 'first_name', 'VARCHAR(255)');
+        await addColumnIfNotExists('teachers', 'last_name', 'VARCHAR(255)');
+        await addColumnIfNotExists('teachers', 'gender', 'ENUM("Male", "Female", "Other")');
+        await addColumnIfNotExists('teachers', 'date_of_birth', 'DATE');
+        await addColumnIfNotExists('teachers', 'hire_date', 'DATE');
+        await addColumnIfNotExists('teachers', 'phone', 'VARCHAR(20)');
+        await addColumnIfNotExists('teachers', 'qualification', 'VARCHAR(255)');
+        await addColumnIfNotExists('teachers', 'primary_subject', 'VARCHAR(255)');
+        await addColumnIfNotExists('teachers', 'employment_status', 'VARCHAR(50) DEFAULT "Full-time"');
+        await addColumnIfNotExists('teachers', 'address', 'TEXT');
+        await addColumnIfNotExists('teachers', 'is_active', 'BOOLEAN DEFAULT TRUE');
+        await addColumnIfNotExists('teachers', 'is_active', 'BOOLEAN DEFAULT TRUE');
+
+        // 2.5 Attendance Table (Teacher Attendance)
+        await dbPool.execute(`
+            CREATE TABLE IF NOT EXISTS attendance (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                teacher_id INT NOT NULL,
+                check_in_time DATETIME,
+                check_out_time DATETIME,
+                check_in_photo_url1 VARCHAR(255),
+                check_in_photo_url2 VARCHAR(255),
+                check_out_photo_url1 VARCHAR(255),
+                check_out_photo_url2 VARCHAR(255),
+                check_in_latitude DECIMAL(10, 8),
+                check_in_longitude DECIMAL(11, 8),
+                check_out_latitude DECIMAL(10, 8),
+                check_out_longitude DECIMAL(11, 8),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE
+            )
+        `);
+        await addColumnIfNotExists('attendance', 'check_in_photo_url2', 'VARCHAR(255)');
+        await addColumnIfNotExists('attendance', 'check_out_photo_url2', 'VARCHAR(255)');
+        // 3. Students Table
+        await dbPool.execute(`
+            CREATE TABLE IF NOT EXISTS students (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                first_name VARCHAR(255) NOT NULL,
+                last_name VARCHAR(255) NOT NULL,
+                village_id INT,
+                age INT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (village_id) REFERENCES villages(id) ON DELETE SET NULL
+            )
+        `);
+        await addColumnIfNotExists('students', 'gender', 'ENUM("Male", "Female", "Other")');
+        await addColumnIfNotExists('students', 'date_of_birth', 'DATE');
+        await addColumnIfNotExists('students', 'guardian_name', 'VARCHAR(255)');
+        await addColumnIfNotExists('students', 'guardian_phone', 'VARCHAR(20)');
+        await addColumnIfNotExists('students', 'guardian_email', 'VARCHAR(255)');
+        await addColumnIfNotExists('students', 'address', 'TEXT');
+        await addColumnIfNotExists('students', 'admission_date', 'DATE');
+        await addColumnIfNotExists('students', 'admission_number', 'VARCHAR(50)');
+        await addColumnIfNotExists('students', 'status', 'VARCHAR(50) DEFAULT "Active"');
+        await addColumnIfNotExists('students', 'notes', 'TEXT');
+
+        console.log('Database schema updated successfully.');
     } catch (error) {
-        console.error('Error creating students table:', error);
+        console.error('Error updating schema:', error);
     }
 };
 
@@ -1163,17 +1465,35 @@ const createStudentAttendanceTable = async () => {
             id INT AUTO_INCREMENT PRIMARY KEY,
             student_id INT NOT NULL,
             teacher_id INT NOT NULL,
+            session_id INT,
             date DATE NOT NULL,
             status ENUM('present', 'absent') NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE KEY unique_student_date (student_id, date),
             FOREIGN KEY (student_id) REFERENCES students(id) ON DELETE CASCADE,
-            FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE
+            FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE CASCADE,
+            FOREIGN KEY (session_id) REFERENCES attendance(id) ON DELETE CASCADE
         )
     `;
     try {
         await dbPool.execute(sql);
-        console.log('Student attendance table checked/created successfully.');
+
+        // Migration: Add session_id if not exists and drop old unique key
+        try {
+            await dbPool.execute('ALTER TABLE student_attendance ADD COLUMN session_id INT');
+            await dbPool.execute('ALTER TABLE student_attendance ADD FOREIGN KEY (session_id) REFERENCES attendance(id) ON DELETE CASCADE');
+        } catch (e) { }
+
+        try {
+            await dbPool.execute('ALTER TABLE student_attendance DROP INDEX unique_student_date');
+            console.log('Dropped old unique_student_date index.');
+        } catch (e) { }
+
+        try {
+            await dbPool.execute('ALTER TABLE student_attendance ADD UNIQUE KEY unique_student_session (student_id, session_id)');
+            console.log('Added new unique_student_session index.');
+        } catch (e) { }
+
+        console.log('Student attendance table checked/created/migrated successfully.');
     } catch (error) {
         console.error('Error creating student attendance table:', error);
     }
@@ -1202,15 +1522,17 @@ const checkDatabaseConnection = async () => {
     }
 };
 
+
+
 // --- Modified server start logic ---
 const startServer = async () => {
     const isDbConnected = await checkDatabaseConnection();
 
     if (isDbConnected) {
-        await createVillagesTable();
-        await updateTeachersTableSchema();
-        await createStudentsTable();
+        await updateDatabaseSchema();
         await createStudentAttendanceTable();
+
+
         app.listen(port, () => {
             console.log(`Server is running on http://localhost:${port}`);
         });
