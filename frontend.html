@@ -196,7 +196,7 @@
             .responsive-table td[data-label="Actions"],
             .responsive-table td[data-label="Photos"] {
                 justify-content: flex-end;
-                gap: 0.75rem;
+                gap: 1rem;
                 /* margin-top removed for better spacing with new padding */
             }
         }
@@ -2155,7 +2155,7 @@
                                 ${villages.map(v => `
                                     <tr class="bg-white border-b hover:bg-gray-50">
                                         <td data-label="Village Name" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${v.village_name}</td>
-                                        <td class="px-6 py-4 text-right">
+                                        <td class="px-6 py-4 text-right" data-label="Actions">
                                             <button 
                                                 data-id="${v.id}" 
                                                 data-name="${v.village_name}" 
