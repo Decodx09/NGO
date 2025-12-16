@@ -3894,22 +3894,7 @@
 
             main();
             // Initialize on load if session exists
-            document.addEventListener('DOMContentLoaded', () => {
-                const isAdminLoggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
-                if (isAdminLoggedIn) {
-                    showScreen(adminScreen);
-                    initializeAdminDashboard();
-                } else {
-                    // Check for teacher login
-                    const teacherData = sessionStorage.getItem('loggedInTeacher');
-                    if (teacherData) {
-                        const teacher = JSON.parse(teacherData);
-                        setupAuthenticatedTeacherView(teacher);
-                    } else {
-                        showScreen(loginScreen);
-                    }
-                }
-            });
+        });
 
     </script>
 </body>
