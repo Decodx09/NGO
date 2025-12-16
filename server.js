@@ -93,6 +93,10 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'frontend.html'));
 });
 
+app.get('/logo.png', (req, res) => {
+    res.sendFile(path.join(__dirname, 'logo.png'));
+});
+
 // --- LOGIN ROUTES ---
 app.post('/login/teacher', async (req, res) => {
     try {
