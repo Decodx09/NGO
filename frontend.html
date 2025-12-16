@@ -381,6 +381,15 @@
                                 </svg>
                                 Dashboard
                             </a>
+                            <a href="#" id="tab-reports"
+                                class="tab-link px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-3">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                    </path>
+                                </svg>
+                                Reports Center
+                            </a>
                             <a href="#" id="tab-villages"
                                 class="tab-link px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-3">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -417,15 +426,6 @@
                                 </svg>
                                 Students
                             </a>
-                            <a href="#" id="tab-reports"
-                                class="tab-link px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 flex items-center gap-3">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-                                    </path>
-                                </svg>
-                                Reports
-                            </a>
                             <div class="border-t border-slate-100 my-1"></div>
                             <button id="admin-logout-btn"
                                 class="w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-3">
@@ -444,36 +444,121 @@
 
         <main>
             <section id="page-dashboard" class="page page-active">
-                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-900 tracking-tight">Overview</h2>
-                        <p class="text-slate-500 text-sm">Latest Stats Captured Today</p>
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-100 mb-8">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4 sm:gap-0">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
+                            <p class="text-gray-500 text-sm mt-1">Overview of today's attendance</p>
+                        </div>
+                        <div class="relative">
+                            <select id="dashboard-village-filter"
+                                class="appearance-none pl-4 pr-10 py-2.5 border border-gray-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-slate-800 focus:border-slate-800 shadow-sm transition-all hover:border-slate-600 cursor-pointer">
+                                <option value="">All Villages</option>
+                                <!-- Options populated dynamically -->
+                            </select>
+                            <div
+                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
                     </div>
-                    <div class="relative w-full sm:w-auto">
-                        <select id="dashboard-village-filter"
-                            class="w-full sm:w-48 appearance-none pl-3 pr-8 py-2 border border-slate-200 rounded-md text-sm bg-white focus:ring-2 focus:ring-slate-900 focus:border-slate-900 shadow-sm transition-all cursor-pointer font-medium text-slate-700">
-                            <option value="">All Villages</option>
-                            <!-- Options populated dynamically -->
-                        </select>
+
+                    <div id="dashboard-stats" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <!-- Stats injected here -->
+                    </div>
+
+
+                </div>
+            </section>
+
+            <section id="page-reports" class="page">
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-100">
+                    <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Reports Center</h2>
+                            <p class="text-gray-500 text-sm mt-1">Generate detailed attendance reports</p>
+                        </div>
+
+                        <!-- Controls -->
                         <div
-                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
+                            class="flex flex-col sm:flex-row gap-3 w-full xl:w-auto bg-gray-50 p-2 rounded-2xl border border-gray-100">
+                            <!-- Report Type Toggle -->
+                            <div class="bg-white p-1 rounded-xl flex shadow-sm border border-gray-100">
+                                <button id="report-type-teacher"
+                                    class="px-4 py-2 rounded-lg text-sm font-bold transition-all bg-slate-100 text-slate-900 shadow-sm ring-1 ring-slate-200">Teachers</button>
+                                <button id="report-type-student"
+                                    class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all">Students</button>
+                            </div>
+
+                            <!-- Date Range Picker -->
+                            <div
+                                class="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm">
+                                <input type="date" id="report-start-date"
+                                    class="text-sm text-gray-600 outline-none bg-transparent cursor-pointer">
+                                <span class="text-gray-400">-</span>
+                                <input type="date" id="report-end-date"
+                                    class="text-sm text-gray-600 outline-none bg-transparent cursor-pointer">
+                            </div>
+
+                            <!-- Village Filter -->
+                            <select id="report-village-filter"
+                                class="px-4 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-slate-800 outline-none cursor-pointer hover:border-indigo-300 transition-colors">
+                                <option value="">All Villages</option>
+                                <!-- Options populated dynamically -->
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Results Table -->
+                    <div id="report-results" class="overflow-x-auto min-h-[400px]">
+                        <div class="flex flex-col items-center justify-center h-64 text-gray-400">
+                            <svg class="w-16 h-16 mb-4 text-gray-200" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
                             </svg>
+                            <p class="text-lg font-medium">Ready to generate report</p>
+                            <p class="text-sm">Select your filters above and click Generate</p>
                         </div>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4" id="dashboard-stats">
-                    <!-- Skeleton Loader for Stats -->
+            </section>
+
+            <section id="page-villages" class="page">
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-100">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4 sm:gap-0">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900">Village Management</h2>
+                            <p class="text-gray-500 text-sm mt-1">Configure locations and zones</p>
+                        </div>
+                        <button id="add-village-btn"
+                            class="w-full sm:w-auto bg-slate-900 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-black transition flex items-center justify-center gap-2 shadow-lg shadow-slate-800/30 hover:-translate-y-0.5">
+                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                            Add Village
+                        </button>
+                    </div>
+
+                    <div id="villages-list-container"
+                        class="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
+                        <div id="villages-list" class="responsive-table">
+                            <!-- Spinner will be injected here -->
+                        </div>
+                    </div>
                 </div>
             </section>
+
             <section id="page-teachers" class="page">
-                <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-lg border border-gray-100">
+                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-100">
                     <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4 sm:gap-0">
                         <div>
                             <h2 class="text-2xl font-bold text-gray-900">Teacher Roster</h2>
-                            <p class="text-gray-500 text-sm mt-1">Manage and monitor teacher staff</p>
+                            <p class="text-gray-500 text-sm mt-1">Manage teacher profiles and assignments</p>
                         </div>
                         <div class="flex flex-col sm:flex-row gap-3">
                             <div class="relative">
@@ -500,41 +585,10 @@
                             </button>
                         </div>
                     </div>
+
                     <div id="teachers-list-container"
                         class="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
                         <div id="teachers-list" class="responsive-table">
-                            <!-- Spinner will be injected here -->
-                        </div>
-                    </div>
-                    <div id="attendance-details-section" class="mt-8 hidden animate-fadeIn">
-                        <h3 class="text-xl font-bold mb-4 text-gray-800">Attendance History for <span
-                                id="attendance-teacher-name" class="text-slate-900"></span></h3>
-                        <div id="attendance-list"
-                            class="responsive-table border border-gray-100 rounded-xl overflow-hidden shadow-sm"></div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="page-villages" class="page">
-                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-100">
-                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 gap-4 sm:gap-0">
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-900">Village Management</h2>
-                            <p class="text-gray-500 text-sm mt-1">Configure locations and zones</p>
-                        </div>
-                        <button id="add-village-btn"
-                            class="w-full sm:w-auto bg-slate-900 text-white px-5 py-2.5 rounded-xl font-semibold hover:bg-black transition flex items-center justify-center gap-2 shadow-lg shadow-slate-800/30 hover:-translate-y-0.5">
-                            <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                stroke-width="2" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                            </svg>
-                            Add Village
-                        </button>
-                    </div>
-
-                    <div id="villages-list-container"
-                        class="border border-gray-100 rounded-xl overflow-hidden shadow-sm">
-                        <div id="villages-list" class="responsive-table">
                             <!-- Spinner will be injected here -->
                         </div>
                     </div>
@@ -615,58 +669,7 @@
                 </div>
             </section>
 
-            <section id="page-reports" class="page">
-                <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg border border-gray-100">
-                    <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-8 gap-6">
-                        <div>
-                            <h2 class="text-2xl font-bold text-gray-900">Reports Center</h2>
-                            <p class="text-gray-500 text-sm mt-1">Generate detailed attendance reports</p>
-                        </div>
 
-                        <!-- Controls -->
-                        <div
-                            class="flex flex-col sm:flex-row gap-3 w-full xl:w-auto bg-gray-50 p-2 rounded-2xl border border-gray-100">
-                            <!-- Report Type Toggle -->
-                            <div class="bg-white p-1 rounded-xl flex shadow-sm border border-gray-100">
-                                <button id="report-type-teacher"
-                                    class="px-4 py-2 rounded-lg text-sm font-bold transition-all bg-slate-100 text-slate-900 shadow-sm ring-1 ring-slate-200">Teachers</button>
-                                <button id="report-type-student"
-                                    class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 hover:bg-gray-50 transition-all">Students</button>
-                            </div>
-
-                            <!-- Date Range Picker -->
-                            <div
-                                class="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2 shadow-sm">
-                                <input type="date" id="report-start-date"
-                                    class="text-sm text-gray-600 outline-none bg-transparent cursor-pointer">
-                                <span class="text-gray-400">-</span>
-                                <input type="date" id="report-end-date"
-                                    class="text-sm text-gray-600 outline-none bg-transparent cursor-pointer">
-                            </div>
-
-                            <!-- Village Filter -->
-                            <select id="report-village-filter"
-                                class="px-4 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-slate-800 outline-none cursor-pointer hover:border-indigo-300 transition-colors">
-                                <option value="">All Villages</option>
-                                <!-- Options populated dynamically -->
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Results Table -->
-                    <div id="report-results" class="overflow-x-auto min-h-[400px]">
-                        <div class="flex flex-col items-center justify-center h-64 text-gray-400">
-                            <svg class="w-16 h-16 mb-4 text-gray-200" xmlns="http://www.w3.org/2000/svg" fill="none"
-                                viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                            </svg>
-                            <p class="text-lg font-medium">Ready to generate report</p>
-                            <p class="text-sm">Select your filters above and click Generate</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
         </main>
     </div>
     <!-- ===== End Upgraded Admin Screen ===== -->
@@ -1090,11 +1093,7 @@
                             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
                     </div>
                 </div>
-                <div class="mb-4">
-                    <label for="village_phone" class="block text-sm font-semibold text-gray-700 mb-1">Phone</label>
-                    <input type="text" id="village_phone" name="phone"
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
-                </div>
+
                 <div class="mb-4">
                     <label for="village_address" class="block text-sm font-semibold text-gray-700 mb-1">Address</label>
                     <textarea id="village_address" name="address" rows="2"
@@ -1104,12 +1103,14 @@
                     <div>
                         <label for="latitude" class="block text-sm font-semibold text-gray-700 mb-1">Latitude</label>
                         <input type="number" step="any" id="latitude" name="latitude"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"
+                            required>
                     </div>
                     <div>
                         <label for="longitude" class="block text-sm font-semibold text-gray-700 mb-1">Longitude</label>
                         <input type="number" step="any" id="longitude" name="longitude"
-                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none">
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-slate-800 outline-none"
+                            required>
                     </div>
                 </div>
                 <div class="mb-6">
@@ -1628,6 +1629,7 @@
             let studentIdToDelete = null;
             let editModeTeacherId = null;
             let editModeStudentId = null;
+            let editModeVillageId = null;
             let currentTeacherSession = null;
             let resizedPhoto1 = null;
             let resizedPhoto2 = null;
@@ -2153,6 +2155,21 @@
                                     <tr class="bg-white border-b hover:bg-gray-50">
                                         <td data-label="Village Name" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">${v.village_name}</td>
                                         <td class="px-6 py-4 text-right">
+                                            <button 
+                                                data-id="${v.id}" 
+                                                data-name="${v.village_name}" 
+                                                data-district="${v.district || ''}"
+                                                data-state="${v.state}"
+                                                data-country="${v.country || 'India'}"
+                                                data-pincode="${v.pincode}"
+                                                data-latitude="${v.latitude || ''}"
+                                                data-longitude="${v.longitude || ''}"
+                                                data-address="${v.address || ''}"
+                                                data-address="${v.address || ''}"
+                                                data-email="${v.email || ''}"
+                                                data-established-date="${v.established_date ? v.established_date.split('T')[0] : ''}"
+                                                data-notes="${v.notes || ''}"
+                                                class="edit-village-btn text-slate-600 hover:text-slate-900 hover:underline font-medium">Edit</button>
                                             <button data-id="${v.id}" data-name="${v.village_name}" class="delete-village-btn text-red-600 hover:text-red-900 hover:underline ml-4">Delete</button>
                                         </td>
                                     </tr>`).join('')}
@@ -2429,6 +2446,7 @@
             };
 
             const fetchTodaysAttendance = async () => {
+                if (!presentListEl) return;
                 presentListEl.innerHTML = getListSkeletonHtml(3);
                 const villageId = reportVillageFilter.value;
                 const presentCountEl = document.getElementById('present-count');
@@ -2441,7 +2459,7 @@
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.error || 'Failed to fetch data');
 
-                    presentCountEl.textContent = result.data.length;
+                    if (presentCountEl) presentCountEl.textContent = result.data.length;
 
                     if (result.data.length === 0) {
                         presentListEl.innerHTML = `<div class="p-8 text-center text-gray-500 italic">No teachers present today${villageId ? ' in this village' : ''}.</div>`;
@@ -2487,6 +2505,7 @@
             };
 
             const fetchAbsentTeachers = async () => {
+                if (!absentListEl) return;
                 absentListEl.innerHTML = getListSkeletonHtml(3);
                 const villageId = reportVillageFilter.value;
                 const absentCountEl = document.getElementById('absent-count');
@@ -2499,7 +2518,7 @@
                     const result = await response.json();
                     if (!response.ok) throw new Error(result.error || 'Failed to fetch data');
 
-                    absentCountEl.textContent = result.data.length;
+                    if (absentCountEl) absentCountEl.textContent = result.data.length;
 
                     if (result.data.length === 0) {
                         absentListEl.innerHTML = `<div class="p-8 text-center text-gray-500 italic">No teachers absent today${villageId ? ' in this village' : ''}.</div>`;
@@ -3068,7 +3087,10 @@
             studentRosterFilter.addEventListener('change', fetchStudents);
 
             addVillageBtn.addEventListener('click', () => {
+                editModeVillageId = null;
                 addVillageForm.reset();
+                document.querySelector('#village-modal h2').textContent = 'Add New Village';
+                document.querySelector('#village-modal button[type="submit"]').textContent = 'Save Village';
                 villageModal.classList.remove('hidden');
             });
 
@@ -3082,9 +3104,13 @@
                 const data = Object.fromEntries(formData.entries());
                 const token = sessionStorage.getItem('adminToken');
 
+                const isEditMode = !!editModeVillageId;
+                const url = isEditMode ? `${API_BASE_URL}/villages/${editModeVillageId}` : `${API_BASE_URL}/villages`;
+                const method = isEditMode ? 'PUT' : 'POST';
+
                 try {
-                    const response = await fetch(`${API_BASE_URL}/villages`, {
-                        method: 'POST',
+                    const response = await fetch(url, {
+                        method: method,
                         headers: {
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${token}`
@@ -3092,9 +3118,9 @@
                         body: JSON.stringify(data),
                     });
                     const result = await response.json();
-                    if (!response.ok) throw new Error(result.error || 'Failed to add village');
+                    if (!response.ok) throw new Error(result.error || 'Failed to save village');
 
-                    showToast('Village added successfully!');
+                    showToast(`Village ${isEditMode ? 'updated' : 'added'} successfully!`);
                     villageModal.classList.add('hidden');
                     fetchVillages();
                 } catch (error) {
@@ -3102,12 +3128,34 @@
                 }
             });
 
-            // NEW: Event listener for Village List (Delete)
+            // NEW: Event listener for Village List (Edit & Delete)
             villagesListEl.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-village-btn')) {
                     const villageId = e.target.dataset.id;
                     const villageName = e.target.dataset.name;
                     showConfirmModal(villageId, villageName, 'village');
+                } else if (e.target.classList.contains('edit-village-btn')) {
+                    editModeVillageId = e.target.dataset.id;
+                    const v = e.target.dataset;
+
+                    addVillageForm.elements.village_name.value = v.name;
+                    addVillageForm.elements.district.value = v.district;
+                    addVillageForm.elements.state.value = v.state;
+                    addVillageForm.elements.country.value = v.country;
+                    addVillageForm.elements.pincode.value = v.pincode;
+                    addVillageForm.elements.latitude.value = v.latitude;
+                    addVillageForm.elements.longitude.value = v.longitude;
+                    addVillageForm.elements.longitude.value = v.longitude;
+                    // addVillageForm.elements.email.value = v.email; // Email field not in form
+                    addVillageForm.elements.established_date.value = v.establishedDate;
+                    addVillageForm.elements.address.value = v.address;
+                    addVillageForm.elements.notes.value = v.notes;
+
+                    // Update modal title and button text
+                    document.querySelector('#village-modal h2').textContent = 'Edit Village';
+                    document.querySelector('#village-modal button[type="submit"]').textContent = 'Save Changes';
+
+                    villageModal.classList.remove('hidden');
                 }
             });
 
@@ -3392,10 +3440,10 @@
 
             const tabs = {
                 'tab-dashboard': 'page-dashboard',
+                'tab-reports': 'page-reports',
                 'tab-villages': 'page-villages',
                 'tab-teachers': 'page-teachers',
-                'tab-students': 'page-students',
-                'tab-reports': 'page-reports'
+                'tab-students': 'page-students'
             };
 
             Object.keys(tabs).forEach(tabId => {
@@ -3424,10 +3472,11 @@
                         document.getElementById(tabs[tabId]).classList.add('page-active');
 
                         // Specific page loads
-                        if (tabId === 'tab-dashboard') fetchDashboardStats();
+
                         if (tabId === 'tab-villages') fetchVillages();
                         if (tabId === 'tab-teachers') fetchTeachersForAdmin();
                         if (tabId === 'tab-students') fetchStudents();
+                        if (tabId === 'tab-dashboard') fetchDashboardStats();
                         if (tabId === 'tab-reports') {
                             const today = new Date().toISOString().split('T')[0];
                             const startDateInput = document.getElementById('report-start-date');
@@ -3605,11 +3654,17 @@
                 populateVillageDropdown(teacherRosterFilter);
                 await populateVillageDropdown(reportVillageFilter);
 
-                // Add event listener for dashboard filter
-                const dashboardFilter = document.getElementById('dashboard-village-filter');
-                if (dashboardFilter) {
-                    dashboardFilter.addEventListener('change', fetchDashboardStats);
+                // Set default dates for reports
+                const today = new Date().toISOString().split('T')[0];
+                const startDateInput = document.getElementById('report-start-date');
+                const endDateInput = document.getElementById('report-end-date');
+                if (startDateInput && endDateInput) {
+                    startDateInput.value = today;
+                    endDateInput.value = today;
                 }
+
+                // Fetch initial dashboard stats
+                fetchDashboardStats();
             }
 
             function renderDashboardStats(data) {
@@ -3827,7 +3882,8 @@
                 if (isAdmin) {
                     showScreen(adminScreen);
                     initializeAdminDashboard();
-                    fetchDashboardStats();
+                    initializeAdminDashboard();
+                    // fetchDashboardStats(); // Removed as Dashboard is replaced by Reports
                 } else if (loggedInTeacherData) {
                     setupAuthenticatedTeacherView(JSON.parse(loggedInTeacherData));
                 } else {

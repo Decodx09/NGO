@@ -437,8 +437,9 @@ app.delete('/students/:id', authenticateAdmin, async (req, res) => {
 app.post('/villages', authenticateAdmin, async (req, res) => {
     try {
         const { village_name, district, state, country, pincode, latitude, longitude, address, phone, email, established_date, notes } = req.body;
-        if (!village_name || !state || !pincode) {
-            return res.status(400).json({ error: 'Missing required fields: village_name, state, pincode.' });
+        // MODIFIED: Added latitude and longitude to required fields
+        if (!village_name || !state || !pincode || !latitude || !longitude) {
+            return res.status(400).json({ error: 'Missing required fields: village_name, state, pincode, latitude, longitude.' });
         }
 
         const sql = `INSERT INTO villages 
@@ -446,7 +447,7 @@ app.post('/villages', authenticateAdmin, async (req, res) => {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
         const [result] = await dbPool.execute(sql, [
             village_name, district || null, state, country || 'India', pincode,
-            latitude || null, longitude || null, address || null, phone || null, email || null, established_date || null, notes || null
+            latitude, longitude, address || null, phone || null, email || null, established_date || null, notes || null
         ]);
 
         res.status(201).json({
@@ -466,6 +467,40 @@ app.get('/villages', authenticateAdmin, async (req, res) => {
         res.status(200).json(villages);
     } catch (error) {
         console.error('Error fetching villages:', error);
+        res.status(500).json({ error: 'An internal server error occurred.' });
+    }
+});
+
+// NEW: PUT route for updating villages
+app.put('/villages/:id', authenticateAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { village_name, district, state, country, pincode, latitude, longitude, address, phone, email, established_date, notes } = req.body;
+
+        // MODIFIED: Added latitude and longitude to required fields
+        if (!village_name || !state || !pincode || !latitude || !longitude) {
+            return res.status(400).json({ error: 'Missing required fields: village_name, state, pincode, latitude, longitude.' });
+        }
+
+        const sql = `UPDATE villages SET 
+            village_name = ?, district = ?, state = ?, country = ?, pincode = ?, 
+            latitude = ?, longitude = ?, address = ?, phone = ?, email = ?, 
+            established_date = ?, notes = ? 
+            WHERE id = ?`;
+
+        const [result] = await dbPool.execute(sql, [
+            village_name, district || null, state, country || 'India', pincode,
+            latitude, longitude, address || null, phone || null, email || null, established_date || null, notes || null,
+            id
+        ]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Village not found.' });
+        }
+
+        res.status(200).json({ message: 'Village updated successfully.' });
+    } catch (error) {
+        console.error('Error updating village:', error);
         res.status(500).json({ error: 'An internal server error occurred.' });
     }
 });
