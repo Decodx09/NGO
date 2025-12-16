@@ -195,7 +195,8 @@
 
             .responsive-table td[data-label="Actions"],
             .responsive-table td[data-label="Photos"] {
-                justify-content: flex-start;
+                justify-content: flex-end;
+                gap: 0.75rem;
                 /* margin-top removed for better spacing with new padding */
             }
         }
@@ -2170,7 +2171,7 @@
                                                 data-established-date="${v.established_date ? v.established_date.split('T')[0] : ''}"
                                                 data-notes="${v.notes || ''}"
                                                 class="edit-village-btn text-slate-600 hover:text-slate-900 hover:underline font-medium">Edit</button>
-                                            <button data-id="${v.id}" data-name="${v.village_name}" class="delete-village-btn text-red-600 hover:text-red-900 hover:underline ml-4">Delete</button>
+                                            <button data-id="${v.id}" data-name="${v.village_name}" class="delete-village-btn text-red-600 hover:text-red-900 hover:underline">Delete</button>
                                         </td>
                                     </tr>`).join('')}
                             </tbody>
@@ -3892,7 +3893,24 @@
             };
 
             main();
-        });
+            // Initialize on load if session exists
+            document.addEventListener('DOMContentLoaded', () => {
+                const isAdminLoggedIn = sessionStorage.getItem('isAdminLoggedIn') === 'true';
+                if (isAdminLoggedIn) {
+                    showScreen(adminScreen);
+                    initializeAdminDashboard();
+                } else {
+                    // Check for teacher login
+                    const teacherData = sessionStorage.getItem('loggedInTeacher');
+                    if (teacherData) {
+                        const teacher = JSON.parse(teacherData);
+                        setupAuthenticatedTeacherView(teacher);
+                    } else {
+                        showScreen(loginScreen);
+                    }
+                }
+            });
+
     </script>
 </body>
 
