@@ -50,6 +50,38 @@ const dbPool = mysql.createPool({
     queueLimit: 0
 });
 
+// --- Database Initialization & Seeding ---
+async function initializeDatabase() {
+    try {
+        // Create admins table if not exists
+        const createTableSql = `
+            CREATE TABLE IF NOT EXISTS admins (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(255) NOT NULL UNIQUE,
+                password VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        `;
+        await dbPool.execute(createTableSql);
+
+        // Check if admin exists, if not seed from .env
+        const [rows] = await dbPool.execute('SELECT count(*) as count FROM admins');
+        if (rows[0].count === 0) {
+            const adminUser = process.env.ADMIN_USER;
+            const adminPass = process.env.ADMIN_PASSWORD;
+            if (adminUser && adminPass) {
+                await dbPool.execute('INSERT INTO admins (username, password) VALUES (?, ?)', [adminUser, adminPass]);
+                console.log('Admin account seeded from .env');
+            } else {
+                console.warn('No admin credentials found in .env to seed database.');
+            }
+        }
+    } catch (error) {
+        console.error('Database initialization error:', error);
+    }
+}
+initializeDatabase();
+
 // --- Multer Configuration for Photo Uploads ---
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -130,22 +162,34 @@ app.post('/login/teacher', async (req, res) => {
     }
 });
 
-app.post('/login/admin', (req, res) => {
+app.post('/login/admin', async (req, res) => {
     const { username, password } = req.body;
-    const adminUser = process.env.ADMIN_USER;
-    const adminPass = process.env.ADMIN_PASSWORD;
 
     if (!username || !password) {
         return res.status(400).json({ error: 'Username and password are required.' });
     }
-    if (username === adminUser && password === adminPass) {
-        currentAdminToken = crypto.randomBytes(32).toString('hex');
-        res.status(200).json({ success: true, message: 'Admin login successful.', token: currentAdminToken });
-    } else {
-        res.status(401).json({ success: false, error: 'Invalid credentials.' });
+
+    try {
+        const [rows] = await dbPool.execute('SELECT * FROM admins WHERE username = ?', [username]);
+
+        if (rows.length === 0) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials.' });
+        }
+
+        const admin = rows[0];
+        // In a real app, use bcrypt.compare here. For now, plain text comparison as per existing pattern.
+        if (admin.password === password) {
+            currentAdminToken = crypto.randomBytes(32).toString('hex');
+            // Store admin ID in session/token map if needed, for now just global token
+            res.status(200).json({ success: true, message: 'Admin login successful.', token: currentAdminToken, adminId: admin.id });
+        } else {
+            res.status(401).json({ success: false, error: 'Invalid credentials.' });
+        }
+    } catch (error) {
+        console.error('Admin login error:', error);
+        res.status(500).json({ error: 'Internal server error.' });
     }
 });
-
 
 // --- ADMIN AUTH MIDDLEWARE ---
 const authenticateAdmin = (req, res, next) => {
@@ -157,6 +201,42 @@ const authenticateAdmin = (req, res, next) => {
     }
     next();
 };
+
+app.post('/admin/change-password', authenticateAdmin, async (req, res) => {
+    const { currentPassword, newPassword } = req.body;
+    // We need to know WHICH admin is changing the password. 
+    // Since we have a simple single-admin token system, we'll assume the 'admin' user or pass the username.
+    // Better: pass the username in the body or assume the single admin context.
+    // Let's require username for verification or just update the first admin found? 
+    // To be safe, let's require the username to be sent from frontend or update the logged in user.
+    // Given the current simple token auth, let's update the admin that matches the current password.
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Current and new passwords are required.' });
+    }
+
+    try {
+        // Find admin with this password
+        const [rows] = await dbPool.execute('SELECT * FROM admins WHERE password = ?', [currentPassword]);
+
+        if (rows.length === 0) {
+            return res.status(401).json({ error: 'Incorrect current password.' });
+        }
+
+        const adminId = rows[0].id;
+
+        await dbPool.execute('UPDATE admins SET password = ? WHERE id = ?', [newPassword, adminId]);
+
+        res.status(200).json({ success: true, message: 'Password updated successfully.' });
+    } catch (error) {
+        console.error('Password change error:', error);
+        res.status(500).json({ error: 'Internal server error.' });
+    }
+});
+
+
+// --- ADMIN AUTH MIDDLEWARE ---
+
 
 // --- STUDENT MANAGEMENT ROUTES ---
 app.post('/students', authenticateAdmin, async (req, res) => {
@@ -1577,9 +1657,8 @@ const startServer = async () => {
         });
     } else {
         console.error('Server is not starting due to database connection failure.');
-        process.exit(1); // Exit the process with an error code
+        process.exit(1);
     }
 };
 
-// Start the server
 startServer();
